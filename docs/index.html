@@ -6,12 +6,13 @@
     <title>LittleYouran的博客</title>
     <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
     <style>
-        /* 全局样式重置 */
+        /* 全局样式重置 + 性能优化：减少重绘 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             transition: all 0.2s ease;
+            will-change: transform, opacity;
         }
 
         /* 固定深色模式变量 */
@@ -35,6 +36,8 @@
             color: var(--text-color);
             padding: clamp(10px, 3vw, 20px);
             overflow-x: hidden;
+            /* 预加载背景图，提升显示速度 */
+            background-image: url(https://picsum.photos/1920/1080);
         }
 
         /* 头部区域 */
@@ -50,6 +53,8 @@
             border-radius: clamp(6px, 1.5vw, 8px);
             flex-wrap: wrap;
             gap: 15px;
+            /* 硬件加速 */
+            transform: translateZ(0);
         }
 
         .header-left {
@@ -65,14 +70,14 @@
             border: 2px solid var(--text-highlight);
         }
 
-        /* 搜索框样式 */
+        /* 搜索框样式（首页+列表页通用） */
         .search-box {
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        #search-input {
+        .search-input {
             padding: 6px 12px;
             background: var(--search-bg);
             border: 1px solid var(--border-color);
@@ -82,11 +87,11 @@
             width: clamp(150px, 20vw, 200px);
         }
 
-        #search-input::placeholder {
+        .search-input::placeholder {
             color: rgba(255,255,255,0.7);
         }
 
-        #search-btn {
+        .search-btn {
             padding: 6px 12px;
             background: var(--search-bg);
             border: 1px solid var(--border-color);
@@ -95,7 +100,7 @@
             cursor: pointer;
         }
 
-        #search-btn:hover {
+        .search-btn:hover {
             background: var(--btn-hover);
         }
 
@@ -107,6 +112,7 @@
             padding: clamp(15px, 3vw, 20px);
             border-radius: clamp(6px, 1.5vw, 8px);
             border: 1px solid var(--border-color);
+            transform: translateZ(0);
         }
 
         /* 资源导航区域 */
@@ -140,6 +146,7 @@
             color: var(--text-highlight);
             text-decoration: none;
             font-size: 16px;
+            transform: translateZ(0);
         }
 
         .link-btn:hover {
@@ -152,22 +159,48 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
+            transform: translateZ(0);
+        }
+
+        .list-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
         .back-home {
             display: inline-block;
-            margin-bottom: 20px;
             color: var(--text-highlight);
             text-decoration: none;
             border: 1px solid var(--border-color);
             padding: 8px 16px;
             border-radius: 4px;
+            transform: translateZ(0);
         }
 
         .back-home:hover {
             background: var(--btn-hover);
         }
 
+        .sort-select {
+            padding: 6px 12px;
+            background: var(--search-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-highlight);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .list-title {
+            color: var(--text-highlight);
+            margin: 0;
+        }
+
+        /* 图片列表 + 懒加载样式 */
         .image-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -182,6 +215,7 @@
             padding: 12px;
             text-align: center;
             background: var(--bg-highlight);
+            transform: translateZ(0);
         }
 
         .image-thumbnail {
@@ -190,6 +224,13 @@
             object-fit: cover;
             border-radius: 6px;
             margin-bottom: 10px;
+            /* 懒加载占位 */
+            background: rgba(0,0,0,0.1);
+            transition: opacity 0.3s ease;
+        }
+
+        .image-thumbnail.loaded {
+            opacity: 1;
         }
 
         .resource-link{
@@ -203,7 +244,7 @@
             text-decoration: underline;
         }
 
-        .empty-tip {
+        .empty-tip, .loading-tip {
             color: var(--text-highlight);
             text-align: center;
             padding: 50px 0;
@@ -217,6 +258,7 @@
             font-size: small;
             color: var(--text-highlight);
             padding-bottom: 20px;
+            transform: translateZ(0);
         }
 
         #footer a {
@@ -242,6 +284,10 @@
                 display: block;
                 margin: 0 auto 15px;
             }
+            .list-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
 
         @media (min-width: 600px) and (max-width: 900px) {
@@ -264,8 +310,8 @@
             </div>
             <div class="header-right">
                 <div class="search-box">
-                    <input type="text" id="search-input" placeholder="输入关键词搜索...">
-                    <button id="search-btn">搜索</button>
+                    <input type="text" class="search-input" id="home-search" placeholder="先进入分类再搜索...">
+                    <button class="search-btn" id="home-search-btn" disabled>搜索</button>
                 </div>
             </div>
         </div>
@@ -290,9 +336,23 @@
 
     <!-- 壁纸列表页面（默认隐藏） -->
     <div id="list-page" class="list-page" style="display: none;">
-        <a href="javascript:void(0);" class="back-home" id="back-btn">← 返回首页</a>
-        <h2 id="list-title" style="color: var(--text-highlight); margin-bottom: 20px;"></h2>
-        <ul class="image-list" id="image-list-container"></ul>
+        <div class="list-header">
+            <a href="javascript:void(0);" class="back-home" id="back-btn">← 返回首页</a>
+            <h2 class="list-title" id="list-title"></h2>
+            <div class="search-box">
+                <input type="text" class="search-input" id="list-search" placeholder="输入关键词精准搜索...">
+                <button class="search-btn" id="list-search-btn">搜索</button>
+            </div>
+            <select class="sort-select" id="sort-select">
+                <option value="name-asc">按文件名升序</option>
+                <option value="name-desc">按文件名降序</option>
+                <option value="time-asc">按上传时间升序</option>
+                <option value="time-desc">按上传时间降序</option>
+            </select>
+        </div>
+        <ul class="image-list" id="image-list-container">
+            <li class="loading-tip">加载中...</li>
+        </ul>
     </div>
 
     <script>
@@ -303,9 +363,13 @@
         const LANDSCAPE_FOLDER = `${BASE_FOLDER}/横屏`;
         const PORTRAIT_FOLDER = `${BASE_FOLDER}/竖屏`;
 
-        // 全局变量
+        // 全局变量（缓存数据提升速度）
         let currentFolder = '';
         let allImages = [];
+        let cachedImages = { // 缓存横/竖屏壁纸数据
+            landscape: [],
+            portrait: []
+        };
 
         // DOM元素
         const homePage = document.getElementById('home-page');
@@ -316,8 +380,12 @@
         const listTitle = document.getElementById('list-title');
         const imageListContainer = document.getElementById('image-list-container');
         const deviceTypeEl = document.getElementById('device-type');
-        const searchInput = document.getElementById('search-input');
-        const searchBtn = document.getElementById('search-btn');
+        const sortSelect = document.getElementById('sort-select');
+        // 搜索元素
+        const homeSearch = document.getElementById('home-search');
+        const homeSearchBtn = document.getElementById('home-search-btn');
+        const listSearch = document.getElementById('list-search');
+        const listSearchBtn = document.getElementById('list-search-btn');
 
         // 检测设备类型
         function detectDeviceType() {
@@ -327,113 +395,196 @@
             return isMobile;
         }
 
-        // 从GitHub API获取图片
+        // 从GitHub API获取图片（带缓存）
         async function getImages(folderPath) {
+            // 先查缓存，避免重复请求
+            const cacheKey = folderPath === LANDSCAPE_FOLDER ? 'landscape' : 'portrait';
+            if (cachedImages[cacheKey].length > 0) {
+                return [...cachedImages[cacheKey]];
+            }
+
             try {
                 const response = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/${folderPath}`);
                 if (!response.ok) throw new Error('获取壁纸失败');
                 const files = await response.json();
                 const imageExts = ['jpg', 'png', 'jpeg', 'gif', 'webp'];
-                return files.filter(file => {
+                const images = files.filter(file => {
                     const ext = file.name.split('.').pop().toLowerCase();
                     return imageExts.includes(ext);
                 });
+                // 缓存数据
+                cachedImages[cacheKey] = images;
+                return [...images];
             } catch (error) {
                 console.error(error);
                 return [];
             }
         }
 
-        // 随机设置首页背景
+        // 随机设置首页背景（预加载）
         async function setRandomBackground() {
             const isMobile = detectDeviceType();
             const targetFolder = isMobile ? PORTRAIT_FOLDER : LANDSCAPE_FOLDER;
-            const images = await getImages(targetFolder);
-            if (images.length === 0) {
-                document.body.style.backgroundImage = 'url(https://picsum.photos/1920/1080)';
-                return;
+            const cacheKey = isMobile ? 'portrait' : 'landscape';
+            
+            // 优先用缓存，无缓存则异步加载
+            if (cachedImages[cacheKey].length > 0) {
+                const randomImg = cachedImages[cacheKey][Math.floor(Math.random() * cachedImages[cacheKey].length)];
+                document.body.style.backgroundImage = `url(${randomImg.download_url})`;
+            } else {
+                getImages(targetFolder).then(images => {
+                    if (images.length > 0) {
+                        const randomImg = images[Math.floor(Math.random() * images.length)];
+                        document.body.style.backgroundImage = `url(${randomImg.download_url})`;
+                    }
+                });
             }
-            const randomImg = images[Math.floor(Math.random() * images.length)];
-            document.body.style.backgroundImage = `url(${randomImg.download_url})`;
         }
 
-        // 渲染壁纸列表
+        // 排序壁纸数据
+        function sortImages(images, sortType) {
+            const sorted = [...images];
+            switch (sortType) {
+                case 'name-asc':
+                    return sorted.sort((a, b) => a.name.localeCompare(b.name));
+                case 'name-desc':
+                    return sorted.sort((a, b) => b.name.localeCompare(a.name));
+                case 'time-asc':
+                    return sorted.sort((a, b) => new Date(a.commit.author.date) - new Date(b.commit.author.date));
+                case 'time-desc':
+                    return sorted.sort((a, b) => new Date(b.commit.author.date) - new Date(a.commit.author.date));
+                default:
+                    return sorted;
+            }
+        }
+
+        // 渲染壁纸列表（懒加载图片）
         function renderImageList(images) {
             if (images.length === 0) {
                 imageListContainer.innerHTML = `<li class="empty-tip">暂无壁纸资源</li>`;
                 return;
             }
+
+            // 生成列表，图片懒加载
             imageListContainer.innerHTML = images.map(img => `
                 <li class="image-item" data-name="${img.name}">
-                    <img src="${img.download_url}" alt="${img.name}" class="image-thumbnail">
+                    <img 
+                        src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" 
+                        data-src="${img.download_url}" 
+                        alt="${img.name}" 
+                        class="image-thumbnail"
+                        onload="this.classList.add('loaded')"
+                    >
                     <a href="${img.download_url}" target="_blank" class="resource-link">${img.name}</a>
                 </li>
             `).join('');
+
+            // 懒加载执行
+            lazyLoadImages();
         }
 
-        // 切换到列表页面
+        // 图片懒加载（提升加载速度）
+        function lazyLoadImages() {
+            const images = document.querySelectorAll('.image-thumbnail[data-src]');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        img.removeAttribute('data-src');
+                        observer.unobserve(img);
+                    }
+                });
+            }, { rootMargin: '200px' });
+
+            images.forEach(img => observer.observe(img));
+        }
+
+        // 切换到列表页面（带预加载）
         async function goToListPage(folder, title) {
             currentFolder = folder;
             listTitle.textContent = title;
             homePage.style.display = 'none';
             listPage.style.display = 'block';
-            // 获取并渲染图片
+            listSearch.value = ''; // 清空搜索框
+
+            // 显示加载状态，异步加载数据
+            imageListContainer.innerHTML = `<li class="loading-tip">加载中...</li>`;
             allImages = await getImages(folder);
-            renderImageList(allImages);
+            // 初始按文件名升序排序
+            const sortedImages = sortImages(allImages, sortSelect.value);
+            renderImageList(sortedImages);
         }
 
         // 返回首页
         function goBackHome() {
             listPage.style.display = 'none';
             homePage.style.display = 'block';
-            searchInput.value = '';
+            homeSearch.value = '';
         }
 
-        // 精准搜索（完全匹配关键词）
-        function preciseSearch(keyword) {
-            if (!currentFolder || allImages.length === 0) {
-                alert('请先进入壁纸分类页面再搜索');
+        // 精准搜索（修复：仅在列表页生效，完全匹配）
+        function preciseSearch() {
+            const keyword = listSearch.value.trim();
+            if (!keyword) {
+                // 清空关键词则显示排序后的全部
+                const sortedImages = sortImages(allImages, sortSelect.value);
+                renderImageList(sortedImages);
                 return;
             }
+
+            // 精准匹配：文件名（不含后缀）或完整名称等于关键词
             const matchedImages = allImages.filter(img => {
                 const nameWithoutExt = img.name.split('.').slice(0, -1).join('.');
                 return nameWithoutExt === keyword || img.name === keyword;
             });
+
             renderImageList(matchedImages);
         }
 
-        // 绑定事件
+        // 绑定所有事件
         function bindEvents() {
-            // 横屏壁纸链接
+            // 横屏/竖屏链接
             landscapeLink.addEventListener('click', () => {
                 goToListPage(LANDSCAPE_FOLDER, '横屏壁纸（电脑/平板）');
             });
-            // 竖屏壁纸链接
             portraitLink.addEventListener('click', () => {
                 goToListPage(PORTRAIT_FOLDER, '竖屏壁纸（手机）');
             });
+
             // 返回首页
             backBtn.addEventListener('click', goBackHome);
-            // 搜索按钮
-            searchBtn.addEventListener('click', () => {
-                const keyword = searchInput.value.trim();
-                if (!keyword) {
-                    renderImageList(allImages);
-                    return;
-                }
-                preciseSearch(keyword);
+
+            // 排序下拉框
+            sortSelect.addEventListener('change', () => {
+                const sortedImages = sortImages(allImages, sortSelect.value);
+                renderImageList(sortedImages);
             });
-            // 回车搜索
-            searchInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') searchBtn.click();
+
+            // 列表页搜索（修复：绑定到列表页搜索按钮）
+            listSearchBtn.addEventListener('click', preciseSearch);
+            listSearch.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') preciseSearch();
+            });
+
+            // 首页搜索按钮禁用提示
+            homeSearchBtn.addEventListener('click', () => {
+                alert('请先点击横屏/竖屏壁纸进入分类页面再搜索');
             });
         }
 
-        // 页面初始化
-        window.onload = async () => {
+        // 页面初始化（预加载缓存+优化启动速度）
+        window.addEventListener('DOMContentLoaded', async () => {
             bindEvents();
+            // 预加载当前设备的壁纸数据（不阻塞渲染）
+            const isMobile = detectDeviceType();
+            if (isMobile) {
+                getImages(PORTRAIT_FOLDER).catch(() => {});
+            } else {
+                getImages(LANDSCAPE_FOLDER).catch(() => {});
+            }
             await setRandomBackground();
-        };
+        });
     </script>
 </body>
 </html>
