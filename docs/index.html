@@ -6,7 +6,7 @@
     <title>LittleYouran的博客</title>
     <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
     <style>
-        /* 全局样式重置 + 性能优化：减少重绘 */
+        /* 全局样式重置 + 性能优化 */
         * {
             margin: 0;
             padding: 0;
@@ -36,7 +36,6 @@
             color: var(--text-color);
             padding: clamp(10px, 3vw, 20px);
             overflow-x: hidden;
-            /* 预加载背景图，提升显示速度 */
             background-image: url(https://picsum.photos/1920/1080);
         }
 
@@ -53,7 +52,6 @@
             border-radius: clamp(6px, 1.5vw, 8px);
             flex-wrap: wrap;
             gap: 15px;
-            /* 硬件加速 */
             transform: translateZ(0);
         }
 
@@ -70,7 +68,7 @@
             border: 2px solid var(--text-highlight);
         }
 
-        /* 搜索框样式（首页+列表页通用） */
+        /* 搜索框通用样式 */
         .search-box {
             display: flex;
             align-items: center;
@@ -224,7 +222,6 @@
             object-fit: cover;
             border-radius: 6px;
             margin-bottom: 10px;
-            /* 懒加载占位 */
             background: rgba(0,0,0,0.1);
             transition: opacity 0.3s ease;
         }
@@ -244,7 +241,7 @@
             text-decoration: underline;
         }
 
-        .empty-tip, .loading-tip {
+        .empty-tip, .loading-tip, .search-tip {
             color: var(--text-highlight);
             text-align: center;
             padding: 50px 0;
@@ -323,7 +320,6 @@
                 <div class="device-info">
                     当前设备：<span id="device-type">检测中...</span> | 背景壁纸：随机切换（刷新即可换）
                 </div>
-                <!-- 跳转链接 -->
                 <a href="javascript:void(0);" class="link-btn" id="landscape-link">🖥️ 横屏壁纸（电脑/平板）</a>
                 <a href="javascript:void(0);" class="link-btn" id="portrait-link">📱 竖屏壁纸（手机）</a>
             </div>
@@ -334,7 +330,7 @@
         </div>
     </div>
 
-    <!-- 壁纸列表页面（默认隐藏） -->
+    <!-- 壁纸列表页面 -->
     <div id="list-page" class="list-page" style="display: none;">
         <div class="list-header">
             <a href="javascript:void(0);" class="back-home" id="back-btn">← 返回首页</a>
@@ -356,22 +352,19 @@
     </div>
 
     <script>
-        // 配置：替换为你的GitHub用户名和仓库名
+        // 配置：替换为你的 Gitee 用户名和仓库名（后续迁移用）
         const GITHUB_USER = 'LittleYouran';
         const REPO_NAME = 'LittleYouran.github.io';
         const BASE_FOLDER = 'docs/files';
         const LANDSCAPE_FOLDER = `${BASE_FOLDER}/横屏`;
         const PORTRAIT_FOLDER = `${BASE_FOLDER}/竖屏`;
 
-        // 全局变量（缓存数据提升速度）
+        // 全局变量
         let currentFolder = '';
         let allImages = [];
-        let cachedImages = { // 缓存横/竖屏壁纸数据
-            landscape: [],
-            portrait: []
-        };
+        let cachedImages = { landscape: [], portrait: [] };
 
-        // DOM元素
+        // DOM 元素
         const homePage = document.getElementById('home-page');
         const listPage = document.getElementById('list-page');
         const landscapeLink = document.getElementById('landscape-link');
@@ -381,27 +374,20 @@
         const imageListContainer = document.getElementById('image-list-container');
         const deviceTypeEl = document.getElementById('device-type');
         const sortSelect = document.getElementById('sort-select');
-        // 搜索元素
-        const homeSearch = document.getElementById('home-search');
-        const homeSearchBtn = document.getElementById('home-search-btn');
         const listSearch = document.getElementById('list-search');
         const listSearchBtn = document.getElementById('list-search-btn');
 
         // 检测设备类型
         function detectDeviceType() {
             const isMobile = window.innerWidth <= 600;
-            const deviceType = isMobile ? '手机（竖屏）' : '电脑/平板（横屏）';
-            deviceTypeEl.textContent = deviceType;
+            deviceTypeEl.textContent = isMobile ? '手机（竖屏）' : '电脑/平板（横屏）';
             return isMobile;
         }
 
-        // 从GitHub API获取图片（带缓存）
+        // 获取图片数据（带缓存）
         async function getImages(folderPath) {
-            // 先查缓存，避免重复请求
             const cacheKey = folderPath === LANDSCAPE_FOLDER ? 'landscape' : 'portrait';
-            if (cachedImages[cacheKey].length > 0) {
-                return [...cachedImages[cacheKey]];
-            }
+            if (cachedImages[cacheKey].length > 0) return [...cachedImages[cacheKey]];
 
             try {
                 const response = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/${folderPath}`);
@@ -412,7 +398,6 @@
                     const ext = file.name.split('.').pop().toLowerCase();
                     return imageExts.includes(ext);
                 });
-                // 缓存数据
                 cachedImages[cacheKey] = images;
                 return [...images];
             } catch (error) {
@@ -421,13 +406,12 @@
             }
         }
 
-        // 随机设置首页背景（预加载）
+        // 随机设置背景
         async function setRandomBackground() {
             const isMobile = detectDeviceType();
             const targetFolder = isMobile ? PORTRAIT_FOLDER : LANDSCAPE_FOLDER;
             const cacheKey = isMobile ? 'portrait' : 'landscape';
             
-            // 优先用缓存，无缓存则异步加载
             if (cachedImages[cacheKey].length > 0) {
                 const randomImg = cachedImages[cacheKey][Math.floor(Math.random() * cachedImages[cacheKey].length)];
                 document.body.style.backgroundImage = `url(${randomImg.download_url})`;
@@ -441,31 +425,26 @@
             }
         }
 
-        // 排序壁纸数据
+        // 排序图片
         function sortImages(images, sortType) {
             const sorted = [...images];
             switch (sortType) {
-                case 'name-asc':
-                    return sorted.sort((a, b) => a.name.localeCompare(b.name));
-                case 'name-desc':
-                    return sorted.sort((a, b) => b.name.localeCompare(a.name));
-                case 'time-asc':
-                    return sorted.sort((a, b) => new Date(a.commit.author.date) - new Date(b.commit.author.date));
-                case 'time-desc':
-                    return sorted.sort((a, b) => new Date(b.commit.author.date) - new Date(a.commit.author.date));
-                default:
-                    return sorted;
+                case 'name-asc': return sorted.sort((a, b) => a.name.localeCompare(b.name));
+                case 'name-desc': return sorted.sort((a, b) => b.name.localeCompare(a.name));
+                case 'time-asc': return sorted.sort((a, b) => new Date(a.commit.author.date) - new Date(b.commit.author.date));
+                case 'time-desc': return sorted.sort((a, b) => new Date(b.commit.author.date) - new Date(a.commit.author.date));
+                default: return sorted;
             }
         }
 
-        // 渲染壁纸列表（懒加载图片）
-        function renderImageList(images) {
+        // 渲染图片列表
+        function renderImageList(images, keyword = '') {
             if (images.length === 0) {
-                imageListContainer.innerHTML = `<li class="empty-tip">暂无壁纸资源</li>`;
+                const tip = keyword ? `<li class="search-tip">没有找到 "${keyword}" 相关的壁纸</li>` : `<li class="empty-tip">暂无壁纸资源</li>`;
+                imageListContainer.innerHTML = tip;
                 return;
             }
 
-            // 生成列表，图片懒加载
             imageListContainer.innerHTML = images.map(img => `
                 <li class="image-item" data-name="${img.name}">
                     <img 
@@ -478,12 +457,10 @@
                     <a href="${img.download_url}" target="_blank" class="resource-link">${img.name}</a>
                 </li>
             `).join('');
-
-            // 懒加载执行
             lazyLoadImages();
         }
 
-        // 图片懒加载（提升加载速度）
+        // 图片懒加载
         function lazyLoadImages() {
             const images = document.querySelectorAll('.image-thumbnail[data-src]');
             const observer = new IntersectionObserver((entries) => {
@@ -496,22 +473,19 @@
                     }
                 });
             }, { rootMargin: '200px' });
-
             images.forEach(img => observer.observe(img));
         }
 
-        // 切换到列表页面（带预加载）
+        // 进入列表页
         async function goToListPage(folder, title) {
             currentFolder = folder;
             listTitle.textContent = title;
             homePage.style.display = 'none';
             listPage.style.display = 'block';
-            listSearch.value = ''; // 清空搜索框
+            listSearch.value = '';
 
-            // 显示加载状态，异步加载数据
             imageListContainer.innerHTML = `<li class="loading-tip">加载中...</li>`;
             allImages = await getImages(folder);
-            // 初始按文件名升序排序
             const sortedImages = sortImages(allImages, sortSelect.value);
             renderImageList(sortedImages);
         }
@@ -520,69 +494,67 @@
         function goBackHome() {
             listPage.style.display = 'none';
             homePage.style.display = 'block';
-            homeSearch.value = '';
         }
 
-        // 精准搜索（修复：仅在列表页生效，完全匹配）
+        // ========== 修复搜索核心逻辑 ==========
         function preciseSearch() {
             const keyword = listSearch.value.trim();
+            // 1. 无关键词：显示排序后的全部图片
             if (!keyword) {
-                // 清空关键词则显示排序后的全部
                 const sortedImages = sortImages(allImages, sortSelect.value);
                 renderImageList(sortedImages);
                 return;
             }
 
-            // 精准匹配：文件名（不含后缀）或完整名称等于关键词
+            // 2. 修复匹配逻辑：支持 精准匹配文件名 / 模糊匹配文件名（可选）
+            // 方案A：精准匹配（文件名完全等于关键词，忽略后缀）
             const matchedImages = allImages.filter(img => {
-                const nameWithoutExt = img.name.split('.').slice(0, -1).join('.');
-                return nameWithoutExt === keyword || img.name === keyword;
+                // 获取不带后缀的文件名
+                const nameWithoutExt = img.name.split('.').slice(0, -1).join('.').toLowerCase();
+                // 关键词转小写，避免大小写问题
+                const keywordLower = keyword.toLowerCase();
+                // 精准匹配：不带后缀的文件名 === 关键词
+                return nameWithoutExt === keywordLower;
             });
 
-            renderImageList(matchedImages);
+            // 方案B：模糊匹配（关键词包含在文件名中），需要的话替换上面的 return 为这个
+            // return nameWithoutExt.includes(keywordLower);
+
+            // 3. 渲染结果，带搜索提示
+            renderImageList(matchedImages, keyword);
         }
 
-        // 绑定所有事件
+        // 绑定事件
         function bindEvents() {
-            // 横屏/竖屏链接
-            landscapeLink.addEventListener('click', () => {
-                goToListPage(LANDSCAPE_FOLDER, '横屏壁纸（电脑/平板）');
-            });
-            portraitLink.addEventListener('click', () => {
-                goToListPage(PORTRAIT_FOLDER, '竖屏壁纸（手机）');
-            });
-
-            // 返回首页
+            landscapeLink.addEventListener('click', () => goToListPage(LANDSCAPE_FOLDER, '横屏壁纸（电脑/平板）'));
+            portraitLink.addEventListener('click', () => goToListPage(PORTRAIT_FOLDER, '竖屏壁纸（手机）'));
             backBtn.addEventListener('click', goBackHome);
 
-            // 排序下拉框
+            // 排序事件
             sortSelect.addEventListener('change', () => {
                 const sortedImages = sortImages(allImages, sortSelect.value);
-                renderImageList(sortedImages);
+                renderImageList(sortedImages, listSearch.value.trim());
             });
 
-            // 列表页搜索（修复：绑定到列表页搜索按钮）
+            // 搜索事件（修复：确保绑定成功）
             listSearchBtn.addEventListener('click', preciseSearch);
             listSearch.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') preciseSearch();
             });
 
-            // 首页搜索按钮禁用提示
-            homeSearchBtn.addEventListener('click', () => {
-                alert('请先点击横屏/竖屏壁纸进入分类页面再搜索');
+            // 首页搜索提示
+            document.getElementById('home-search-btn').addEventListener('click', () => {
+                alert('请先进入横屏/竖屏分类页面再搜索');
             });
         }
 
-        // 页面初始化（预加载缓存+优化启动速度）
+        // 页面初始化
         window.addEventListener('DOMContentLoaded', async () => {
             bindEvents();
-            // 预加载当前设备的壁纸数据（不阻塞渲染）
             const isMobile = detectDeviceType();
-            if (isMobile) {
-                getImages(PORTRAIT_FOLDER).catch(() => {});
-            } else {
-                getImages(LANDSCAPE_FOLDER).catch(() => {});
-            }
+            // 预加载当前设备的壁纸数据
+            if (isMobile) getImages(PORTRAIT_FOLDER).catch(() => {});
+            else getImages(LANDSCAPE_FOLDER).catch(() => {});
             await setRandomBackground();
         });
     </script>
