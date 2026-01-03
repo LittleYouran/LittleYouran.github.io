@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="light-mode">
+<html lang="zh-CN" class="dark-mode">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -11,33 +11,24 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            transition: all 0.2s ease; /* 流畅过渡动画 */
         }
 
-        /* 浅色模式基础变量 */
-        :root.light-mode {
-            --border-color: rgba(255,255,255,0.5);
-            --bg-highlight: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
-            --text-color: #fff;
-            --text-highlight: #fff;
-            --search-bg: rgba(255,255,255,0.2);
-            --search-border: rgba(255,255,255,0.5);
-        }
-
-        /* 深色模式基础变量 */
-        :root.dark-mode {
+        /* 固定深色模式变量 */
+        :root {
             --border-color: #000;
             --bg-highlight: linear-gradient(135deg, rgba(0,0,0,0.2), rgba(0,0,0,0.05));
             --text-color: #fff;
             --text-highlight: #fff;
             --search-bg: rgba(0,0,0,0.2);
             --search-border: #000;
+            --btn-hover: rgba(0,0,0,0.4);
         }
 
         body{
             width: 100vw;
             min-height: 100vh;
             font-family: sans-serif;
-            /* 背景图由JS动态设置，这里先占位 */
             background: no-repeat center center fixed;
             background-size: cover;
             background-attachment: fixed;
@@ -46,7 +37,7 @@
             overflow-x: hidden;
         }
 
-        /* 头部区域：含头像、标题、搜索、夜间模式切换 */
+        /* 头部区域 */
         #header{
             display:flex;
             align-items: center;
@@ -84,7 +75,7 @@
         #search-input {
             padding: 6px 12px;
             background: var(--search-bg);
-            border: 1px solid var(--search-border);
+            border: 1px solid var(--border-color);
             border-radius: 4px;
             color: var(--text-highlight);
             outline: none;
@@ -98,20 +89,14 @@
         #search-btn {
             padding: 6px 12px;
             background: var(--search-bg);
-            border: 1px solid var(--search-border);
+            border: 1px solid var(--border-color);
             border-radius: 4px;
             color: var(--text-highlight);
             cursor: pointer;
         }
 
-        /* 夜间模式切换按钮 */
-        #theme-toggle {
-            padding: 6px 12px;
-            background: var(--bg-highlight);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            color: var(--text-highlight);
-            cursor: pointer;
+        #search-btn:hover {
+            background: var(--btn-hover);
         }
 
         /* 内容区域 */
@@ -135,6 +120,57 @@
         .resource-wrap h3 {
             color: var(--text-highlight);
             margin-bottom: 10px;
+        }
+
+        .device-info {
+            color: var(--text-highlight);
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        /* 折叠按钮样式 */
+        .folder-toggle {
+            padding: 8px 16px;
+            background: var(--bg-highlight);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-highlight);
+            cursor: pointer;
+            margin: 10px 0;
+            width: 100%;
+            text-align: left;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .folder-toggle:hover {
+            background: var(--btn-hover);
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-icon.rotate {
+            transform: rotate(90deg);
+        }
+
+        /* 折叠容器 */
+        .folder-content {
+            display: none;
+            margin: 10px 0 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .folder-content.show {
+            display: block;
         }
 
         /* 图片列表样式 */
@@ -224,8 +260,6 @@
                 <input type="text" id="search-input" placeholder="输入关键词搜索...">
                 <button id="search-btn">搜索</button>
             </div>
-            <!-- 夜间模式切换按钮 -->
-            <button id="theme-toggle">切换夜间模式</button>
         </div>
     </div>
 
@@ -234,15 +268,25 @@
         <!-- 资源导航区域 -->
         <div class="resource-wrap">
             <h3>📥 壁纸资源</h3>
-            <div style="color: var(--text-highlight); margin-bottom: 10px;">
+            <div class="device-info">
                 当前设备：<span id="device-type">检测中...</span> | 背景壁纸：随机切换（刷新即可换）
             </div>
-            <!-- 分栏显示横屏/竖屏壁纸 -->
-            <div>
-                <h4 style="color: var(--text-highlight); margin: 15px 0 8px;">🖥️ 横屏壁纸（电脑/平板）</h4>
+            
+            <!-- 横屏壁纸折叠按钮 + 容器 -->
+            <button class="folder-toggle" id="landscape-toggle">
+                🖥️ 横屏壁纸（电脑/平板）
+                <span class="toggle-icon">▶</span>
+            </button>
+            <div class="folder-content" id="landscape-container">
                 <ul class="image-list" id="landscape-list"></ul>
-                
-                <h4 style="color: var(--text-highlight); margin: 15px 0 8px;">📱 竖屏壁纸（手机）</h4>
+            </div>
+
+            <!-- 竖屏壁纸折叠按钮 + 容器 -->
+            <button class="folder-toggle" id="portrait-toggle">
+                📱 竖屏壁纸（手机）
+                <span class="toggle-icon">▶</span>
+            </button>
+            <div class="folder-content" id="portrait-container">
                 <ul class="image-list" id="portrait-list"></ul>
             </div>
         </div>
@@ -257,10 +301,15 @@
         const GITHUB_USER = 'LittleYouran';
         const REPO_NAME = 'LittleYouran.github.io';
         const BASE_FOLDER = 'docs/files';
-        const LANDSCAPE_FOLDER = `${BASE_FOLDER}/横屏`; // 横屏壁纸文件夹
-        const PORTRAIT_FOLDER = `${BASE_FOLDER}/竖屏`;   // 竖屏壁纸文件夹
+        const LANDSCAPE_FOLDER = `${BASE_FOLDER}/横屏`;
+        const PORTRAIT_FOLDER = `${BASE_FOLDER}/竖屏`;
 
-        // 检测设备屏幕类型（横屏/竖屏）
+        // 存储壁纸数据（全局变量，提升流畅度）
+        let landscapeImages = [];
+        let portraitImages = [];
+        let activeSearchFolder = ''; // 记录当前搜索的文件夹
+
+        // 检测设备屏幕类型
         function detectDeviceType() {
             const isMobile = window.innerWidth <= 600;
             const deviceType = isMobile ? '手机（竖屏）' : '电脑/平板（横屏）';
@@ -268,19 +317,19 @@
             return isMobile;
         }
 
-        // 从GitHub API获取指定文件夹的图片
+        // 从GitHub API获取指定文件夹的图片（缓存数据提升流畅度）
         async function getFolderImages(folderPath) {
             try {
                 const response = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/${folderPath}`);
                 if (!response.ok) throw new Error(`获取${folderPath}文件夹失败`);
                 
                 const files = await response.json();
-                // 筛选图片格式
                 const imageExts = ['jpg', 'png', 'jpeg', 'gif', 'webp'];
-                return files.filter(file => {
+                const images = files.filter(file => {
                     const ext = file.name.split('.').pop().toLowerCase();
                     return imageExts.includes(ext);
                 });
+                return images;
             } catch (error) {
                 console.error(error);
                 return [];
@@ -291,86 +340,141 @@
         async function setRandomBackground() {
             const isMobile = detectDeviceType();
             const targetFolder = isMobile ? PORTRAIT_FOLDER : LANDSCAPE_FOLDER;
-            const images = await getFolderImages(targetFolder);
+            const images = isMobile ? portraitImages : landscapeImages;
             
             if (images.length === 0) {
-                document.body.style.backgroundImage = 'url(https://picsum.photos/1920/1080)'; // 备用图
+                // 若缓存无数据，临时获取
+                const tempImages = await getFolderImages(targetFolder);
+                if (tempImages.length === 0) {
+                    document.body.style.backgroundImage = 'url(https://picsum.photos/1920/1080)';
+                    return;
+                }
+                const randomImg = tempImages[Math.floor(Math.random() * tempImages.length)];
+                document.body.style.backgroundImage = `url(${randomImg.download_url})`;
                 return;
             }
 
-            // 随机选一张
             const randomImg = images[Math.floor(Math.random() * images.length)];
             document.body.style.backgroundImage = `url(${randomImg.download_url})`;
         }
 
         // 渲染图片列表
-        async function renderImageList(folderPath, listId, title) {
+        function renderImageList(images, listId) {
             const listEl = document.getElementById(listId);
-            listEl.innerHTML = '加载中...';
-            
-            const images = await getFolderImages(folderPath);
             if (images.length === 0) {
-                listEl.innerHTML = `<li style="color: var(--text-highlight);">暂无${title}壁纸</li>`;
+                listEl.innerHTML = `<li style="color: var(--text-highlight);">暂无壁纸</li>`;
                 return;
             }
 
             listEl.innerHTML = images.map(img => `
-                <li class="image-item">
+                <li class="image-item" data-name="${img.name}">
                     <img src="${img.download_url}" alt="${img.name}" class="image-thumbnail">
                     <a href="${img.download_url}" target="_blank" class="resource-link">${img.name}</a>
                 </li>
             `).join('');
         }
 
-        // 搜索过滤壁纸
-        function filterWallpapers(keyword) {
-            const allItems = document.querySelectorAll('.image-item');
-            allItems.forEach(item => {
-                const name = item.querySelector('.resource-link').textContent.toLowerCase();
-                item.style.display = name.includes(keyword.toLowerCase()) ? 'block' : 'none';
+        // 精准搜索：完全匹配关键词（不是包含）
+        function preciseSearch(keyword) {
+            if (!activeSearchFolder) return; // 未展开文件夹时不搜索
+            
+            let targetImages = [];
+            let targetListId = '';
+
+            if (activeSearchFolder === 'landscape') {
+                targetImages = landscapeImages;
+                targetListId = 'landscape-list';
+                // 隐藏竖屏列表
+                document.getElementById('portrait-container').classList.remove('show');
+                document.getElementById('portrait-toggle').querySelector('.toggle-icon').classList.remove('rotate');
+            } else if (activeSearchFolder === 'portrait') {
+                targetImages = portraitImages;
+                targetListId = 'portrait-list';
+                // 隐藏横屏列表
+                document.getElementById('landscape-container').classList.remove('show');
+                document.getElementById('landscape-toggle').querySelector('.toggle-icon').classList.remove('rotate');
+            }
+
+            // 精准匹配：文件名（不含后缀）或完整名称等于关键词
+            const matchedImages = targetImages.filter(img => {
+                const nameWithoutExt = img.name.split('.').slice(0, -1).join('.');
+                return nameWithoutExt === keyword || img.name === keyword;
+            });
+
+            renderImageList(matchedImages, targetListId);
+        }
+
+        // 折叠/展开文件夹
+        function bindFolderToggle() {
+            // 横屏折叠按钮
+            const landscapeToggle = document.getElementById('landscape-toggle');
+            const landscapeContainer = document.getElementById('landscape-container');
+            landscapeToggle.addEventListener('click', async () => {
+                landscapeContainer.classList.toggle('show');
+                landscapeToggle.querySelector('.toggle-icon').classList.toggle('rotate');
+                activeSearchFolder = 'landscape'; // 设置当前搜索文件夹为横屏
+
+                // 首次展开时加载数据
+                if (landscapeContainer.classList.contains('show') && landscapeImages.length === 0) {
+                    landscapeImages = await getFolderImages(LANDSCAPE_FOLDER);
+                    renderImageList(landscapeImages, 'landscape-list');
+                }
+            });
+
+            // 竖屏折叠按钮
+            const portraitToggle = document.getElementById('portrait-toggle');
+            const portraitContainer = document.getElementById('portrait-container');
+            portraitToggle.addEventListener('click', async () => {
+                portraitContainer.classList.toggle('show');
+                portraitToggle.querySelector('.toggle-icon').classList.toggle('rotate');
+                activeSearchFolder = 'portrait'; // 设置当前搜索文件夹为竖屏
+
+                // 首次展开时加载数据
+                if (portraitContainer.classList.contains('show') && portraitImages.length === 0) {
+                    portraitImages = await getFolderImages(PORTRAIT_FOLDER);
+                    renderImageList(portraitImages, 'portrait-list');
+                }
             });
         }
 
-        // 夜间模式切换
-        const themeToggle = document.getElementById('theme-toggle');
-        const root = document.documentElement;
-        const savedTheme = localStorage.getItem('blog-theme') || 'light-mode';
-        root.className = savedTheme;
-        themeToggle.textContent = savedTheme === 'light-mode' ? '切换夜间模式' : '切换浅色模式';
-
-        themeToggle.addEventListener('click', () => {
-            const isLight = root.className === 'light-mode';
-            const newTheme = isLight ? 'dark-mode' : 'light-mode';
-            root.className = newTheme;
-            localStorage.setItem('blog-theme', newTheme);
-            themeToggle.textContent = isLight ? '切换浅色模式' : '切换夜间模式';
-        });
-
         // 搜索功能绑定
-        const searchBtn = document.getElementById('search-btn');
-        const searchInput = document.getElementById('search-input');
+        function bindSearch() {
+            const searchBtn = document.getElementById('search-btn');
+            const searchInput = document.getElementById('search-input');
 
-        searchBtn.addEventListener('click', () => {
-            const keyword = searchInput.value.trim();
-            if (keyword) {
-                filterWallpapers(keyword);
-            } else {
-                // 重新渲染列表恢复全部
-                renderImageList(LANDSCAPE_FOLDER, 'landscape-list', '横屏');
-                renderImageList(PORTRAIT_FOLDER, 'portrait-list', '竖屏');
-                alert('请输入搜索关键词');
-            }
-        });
+            searchBtn.addEventListener('click', () => {
+                const keyword = searchInput.value.trim();
+                if (!keyword) {
+                    // 清空关键词时重新渲染对应文件夹的全部图片
+                    if (activeSearchFolder === 'landscape') {
+                        renderImageList(landscapeImages, 'landscape-list');
+                    } else if (activeSearchFolder === 'portrait') {
+                        renderImageList(portraitImages, 'portrait-list');
+                    } else {
+                        alert('请先展开横屏/竖屏壁纸再搜索');
+                    }
+                    return;
+                }
+                preciseSearch(keyword);
+            });
 
-        searchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') searchBtn.click();
-        });
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') searchBtn.click();
+            });
+        }
 
-        // 页面加载完成后执行
+        // 页面加载完成后执行（预加载数据提升流畅度）
         window.onload = async () => {
-            await setRandomBackground(); // 随机设置背景
-            await renderImageList(LANDSCAPE_FOLDER, 'landscape-list', '横屏'); // 渲染横屏列表
-            await renderImageList(PORTRAIT_FOLDER, 'portrait-list', '竖屏');   // 渲染竖屏列表
+            bindFolderToggle();
+            bindSearch();
+            // 预加载背景图所需的壁纸数据
+            const isMobile = detectDeviceType();
+            if (isMobile) {
+                portraitImages = await getFolderImages(PORTRAIT_FOLDER);
+            } else {
+                landscapeImages = await getFolderImages(LANDSCAPE_FOLDER);
+            }
+            await setRandomBackground();
         };
     </script>
 </body>
