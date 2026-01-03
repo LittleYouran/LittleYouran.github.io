@@ -1,55 +1,68 @@
 <!DOCTYPE html>
-<html data-color-mode="light" lang="zh-CN">
+<html lang="zh-CN" class="light-mode">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>LittleYouran的博客</title>
     <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
     <style>
-        /* 全局样式重置，消除默认边距 */
+        /* 全局样式重置 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        /* 浅色模式基础变量 */
+        :root.light-mode {
+            --border-color: rgba(255,255,255,0.5);
+            --bg-highlight: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+            --text-color: #fff;
+            --text-highlight: #fff;
+            --search-bg: rgba(255,255,255,0.2);
+            --search-border: rgba(255,255,255,0.5);
+        }
+
+        /* 深色模式基础变量 */
+        :root.dark-mode {
+            --border-color: #000;
+            --bg-highlight: linear-gradient(135deg, rgba(0,0,0,0.2), rgba(0,0,0,0.05));
+            --text-color: #fff;
+            --text-highlight: #fff;
+            --search-bg: rgba(0,0,0,0.2);
+            --search-border: #000;
+        }
+
         body{
-            width: 100vw; /* 占满屏幕宽度 */
-            min-height: 100vh; /* 占满屏幕高度 */
+            width: 100vw;
+            min-height: 100vh;
             font-family: sans-serif;
-            /* 背景图片占满全屏配置 */
             background: url("files/bg.jpg") no-repeat center center fixed;
             background-size: cover;
             background-attachment: fixed;
-            color: #333;
+            color: var(--text-color);
             padding: clamp(10px, 3vw, 20px);
-            overflow-x: hidden; /* 防止横向滚动条 */
+            overflow-x: hidden;
         }
 
+        /* 头部区域：含头像、标题、搜索、夜间模式切换 */
         #header{
             display:flex;
             align-items: center;
+            justify-content: space-between;
             margin: 0 auto 20px;
-            max-width: 900px; /* 内容区域宽度限制 */
-            border-bottom: 1px solid rgba(255,255,255,0.5);
+            max-width: 900px;
+            border-bottom: 1px solid var(--border-color);
             padding: clamp(10px, 2vw, 15px) clamp(15px, 3vw, 20px);
-            /* 淡化白色+高光渐变+毛玻璃 */
-            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
-            backdrop-filter: blur(10px);
+            background: var(--bg-highlight);
             border-radius: clamp(6px, 1.5vw, 8px);
             flex-wrap: wrap;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            gap: 15px;
         }
 
-        #content{
-            margin: 0 auto 30px;
-            max-width: 900px; /* 内容区域宽度限制 */
-            /* 和header一致的淡化高光样式 */
-            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
-            backdrop-filter: blur(10px);
-            padding: clamp(15px, 3vw, 20px);
-            border-radius: clamp(6px, 1.5vw, 8px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        .header-left {
+            display: flex;
+            align-items: center;
         }
 
         .avatar{
@@ -57,57 +70,140 @@
             height: clamp(40px, 10vw, 64px);
             border-radius: 50%;
             margin-right: clamp(10px, 2vw, 15px);
-            border: 2px solid rgba(255,255,255,0.8); /* 头像高光白边 */
+            border: 2px solid var(--text-highlight);
         }
 
+        /* 搜索框样式 */
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #search-input {
+            padding: 6px 12px;
+            background: var(--search-bg);
+            border: 1px solid var(--search-border);
+            border-radius: 4px;
+            color: var(--text-highlight);
+            outline: none;
+            width: clamp(150px, 20vw, 200px);
+        }
+
+        #search-input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        #search-btn {
+            padding: 6px 12px;
+            background: var(--search-bg);
+            border: 1px solid var(--search-border);
+            border-radius: 4px;
+            color: var(--text-highlight);
+            cursor: pointer;
+        }
+
+        /* 夜间模式切换按钮 */
+        #theme-toggle {
+            padding: 6px 12px;
+            background: var(--bg-highlight);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-highlight);
+            cursor: pointer;
+        }
+
+        /* 内容区域 */
+        #content{
+            margin: 0 auto 30px;
+            max-width: 900px;
+            background: var(--bg-highlight);
+            padding: clamp(15px, 3vw, 20px);
+            border-radius: clamp(6px, 1.5vw, 8px);
+            border: 1px solid var(--border-color);
+        }
+
+        /* 资源下载区域 */
+        .resource-wrap {
+            margin-top: 20px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        .resource-wrap h3 {
+            color: var(--text-highlight);
+            margin-bottom: 10px;
+        }
+
+        .resource-link{
+            color: var(--text-highlight);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .resource-link:hover{
+            color: #ffd700;
+            text-decoration: underline;
+        }
+
+        /* 页脚 */
         #footer{
             text-align: center;
             margin: 0 auto;
             max-width: 900px;
             font-size: small;
-            color: rgba(255,255,255,0.8); /* 页脚文字变白 */
+            color: var(--text-highlight);
             padding-bottom: 20px;
         }
 
-        /* 资源链接样式优化 */
-        .resource-link{
-            color: #fff; /* 链接文字变白 */
+        #footer a {
+            color: #ffd700;
             text-decoration: none;
-            font-weight: 500;
-        }
-        .resource-link:hover{
-            color: #ffd700; /* 鼠标悬浮变金色 */
-            text-decoration: underline;
         }
 
-        /* 小屏幕适配 */
+        /* 响应式适配 */
         @media (max-width: 600px) {
             #header, #content, #footer{
-                max-width: 95%; /* 小屏幕内容更宽 */
+                max-width: 95%;
             }
             body{
-                background-size: auto 100vh; /* 手机端背景适配 */
+                background-size: auto 100vh;
+            }
+            .header-left {
+                width: 100%;
             }
         }
 
         @media (min-width: 600px) and (max-width: 900px) {
             #header, #content, #footer{
-                max-width: 90%; /* 平板端内容宽度 */
+                max-width: 90%;
             }
         }
     </style>
 </head>
 <body>
     <div id="header">
-        <img src="https://avatars.githubusercontent.com/u/179694017?v=4" class="avatar" alt="头像">
-        <h1>LittleYouran呀</h1>
+        <div class="header-left">
+            <img src="https://avatars.githubusercontent.com/u/179694017?v=4" class="avatar" alt="头像">
+            <h1>LittleYouran呀</h1>
+        </div>
+        <div class="header-right">
+            <!-- 搜索框 -->
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="输入关键词搜索...">
+                <button id="search-btn">搜索</button>
+            </div>
+            <!-- 夜间模式切换按钮 -->
+            <button id="theme-toggle">切换夜间模式</button>
+        </div>
     </div>
 
     <div id="content">
-        <p>一只猫猫呀喵喵喵</p>
+        <p style="color: var(--text-highlight);">一只猫猫呀喵喵喵</p>
         <!-- 资源导航区域 -->
-        <div style="margin-top: 20px;padding: 16px;border: 1px solid rgba(255,255,255,0.3);border-radius: 6px;">
-            <h3 style="color: #fff;">📥 资源下载</h3>
+        <div class="resource-wrap">
+            <h3>📥 资源下载</h3>
             <ul style="list-style: none;padding-left: 0;">
                 <li><a class="resource-link" href="files/橘雪莉1.jpg" target="_blank">测试图片</a>（点击预览/右键保存）</li>
             </ul>
@@ -115,7 +211,50 @@
     </div>
 
     <div id="footer">
-        Copyright © 2026 LittleYouran呀 | Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank" style="color: #ffd700;">Gmeek</a>
+        Copyright © 2026 LittleYouran呀 | Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a>
     </div>
+
+    <script>
+        // 夜间模式切换逻辑
+        const themeToggle = document.getElementById('theme-toggle');
+        const root = document.documentElement;
+
+        // 初始化：读取本地存储的主题
+        const savedTheme = localStorage.getItem('blog-theme') || 'light-mode';
+        root.className = savedTheme;
+        themeToggle.textContent = savedTheme === 'light-mode' ? '切换夜间模式' : '切换浅色模式';
+
+        // 点击切换主题
+        themeToggle.addEventListener('click', () => {
+            const isLight = root.className === 'light-mode';
+            const newTheme = isLight ? 'dark-mode' : 'light-mode';
+            root.className = newTheme;
+            localStorage.setItem('blog-theme', newTheme);
+            themeToggle.textContent = isLight ? '切换浅色模式' : '切换夜间模式';
+        });
+
+        // 搜索功能（基础版，可自行扩展）
+        const searchBtn = document.getElementById('search-btn');
+        const searchInput = document.getElementById('search-input');
+
+        searchBtn.addEventListener('click', () => {
+            const keyword = searchInput.value.trim();
+            if (keyword) {
+                // 此处为基础搜索逻辑，可根据需求扩展
+                alert(`正在搜索：${keyword}`);
+                // 示例：跳转到GitHub搜索（可替换为自己的搜索逻辑）
+                // window.open(`https://github.com/LittleYouran/LittleYouran.github.io/search?q=${keyword}`, '_blank');
+            } else {
+                alert('请输入搜索关键词');
+            }
+        });
+
+        // 回车触发搜索
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                searchBtn.click();
+            }
+        });
+    </script>
 </body>
 </html>
