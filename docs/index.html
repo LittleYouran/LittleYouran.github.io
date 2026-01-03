@@ -564,10 +564,11 @@
 
             let html = "";
             data.forEach(img => {
+                // 核心修复：给下载按钮绑定独立的下载函数，彻底阻止事件冒泡
                 html += `
                     <li class="image-card">
                         <img src="${img.download_url}" alt="${img.name}" class="image-preview" onclick="openPreview('${img.download_url}')">
-                        <button class="image-download-btn" onclick="downloadFile('${img.download_url}', '${img.name}')">下载</button>
+                        <button class="image-download-btn" onclick="handleWallpaperDownload('${img.download_url}', '${img.name}')">下载</button>
                     </li>
                 `;
             });
@@ -650,7 +651,20 @@
             document.body.style.overflow = "auto";
         }
 
-        // 下载文件
+        // 核心修复：壁纸下载独立函数，避免和预览事件冲突
+        function handleWallpaperDownload(url, fileName) {
+            // 强制触发下载，而非跳转
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName || '壁纸.jpg';
+            a.target = '_blank'; // 可选：打开新标签下载，避免阻塞
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            alert(`开始下载壁纸：${fileName}`);
+        }
+
+        // 通用文件下载
         function downloadFile(url, fileName) {
             const a = document.createElement('a');
             a.href = url;
