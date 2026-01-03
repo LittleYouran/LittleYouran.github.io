@@ -136,11 +136,17 @@
             margin-bottom: 20px;
         }
 
+        /* 壁纸资源按钮容器（纵向） */
+        .wallpaper-btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
         /* 壁纸资源按钮 */
         .link-btn {
-            display: block;
             padding: 10px 20px;
-            margin: 10px auto;
             background: var(--bg-highlight);
             border: 1px solid var(--border-color);
             border-radius: 8px;
@@ -148,6 +154,7 @@
             text-decoration: none;
             font-size: 14px;
             max-width: 200px;
+            width: 100%;
             transform: translateZ(0);
         }
         .link-btn:hover {
@@ -156,18 +163,26 @@
             transition: all 0.2s ease;
         }
 
+        /* ZIP资源按钮容器（横向流式，自动换行） */
+        .zip-btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            padding: 0 5px;
+        }
+
         /* ZIP资源按钮 */
         .zip-btn {
-            display: block;
-            padding: 10px 20px;
-            margin: 10px auto;
+            padding: 10px 15px;
             background: linear-gradient(135deg, rgba(50,50,50,0.3), rgba(30,30,30,0.3));
             border: 1px solid #444;
             border-radius: 8px;
             color: #eee;
             text-decoration: none;
             font-size: 14px;
-            max-width: 200px;
+            white-space: nowrap; /* 防止文字换行 */
             transform: translateZ(0);
         }
         .zip-btn:hover {
@@ -352,6 +367,9 @@
             .image-thumbnail {
                 height: 130px;
             }
+            .zip-btn {
+                padding: 10px 20px;
+            }
         }
     </style>
 </head>
@@ -377,19 +395,23 @@
                 <div class="device-info">
                     当前设备：<span id="device-type">检测中...</span> | 刷新页面切换背景
                 </div>
-                <a href="javascript:void(0)" class="link-btn" onclick="openList('landscape')">🖥️ 横屏壁纸</a>
-                <a href="javascript:void(0)" class="link-btn" onclick="openList('portrait')">📱 竖屏壁纸</a>
+                <div class="wallpaper-btn-group">
+                    <a href="javascript:void(0)" class="link-btn" onclick="openList('landscape')">🖥️ 横屏壁纸</a>
+                    <a href="javascript:void(0)" class="link-btn" onclick="openList('portrait')">📱 竖屏壁纸</a>
+                </div>
             </div>
 
-            <!-- ZIP 资源模块（新增独立边框，按需求排序） -->
+            <!-- ZIP 资源模块（新增独立边框，横向排版） -->
             <div class="resource-module">
                 <h3>📦 资源合集</h3>
-                <a href="javascript:void(0)" class="zip-btn" onclick="alert('后续添加下载链接')">个人二改调度 <span class="tag">(含cts+yc)</span></a>
-                <a href="javascript:void(0)" class="zip-btn" onclick="alert('后续添加下载链接')">一加 资源</a>
-                <a href="javascript:void(0)" class="zip-btn" onclick="alert('后续添加下载链接')">小米 资源</a>
-                <a href="javascript:void(0)" class="zip-btn" onclick="alert('后续添加下载链接')">调度 资源</a>
-                <a href="javascript:void(0)" class="zip-btn" onclick="alert('后续添加下载链接')">调整震动</a>
-                <a href="javascript:void(0)" class="zip-btn" onclick="alert('后续添加下载链接')">音效模块</a>
+                <div class="zip-btn-group">
+                    <a href="https://github.com/LittleYouran/LittleYouran.github.io/tree/main/docs/files/个人二改调度" target="_blank" class="zip-btn">个人二改调度 <span class="tag">(含cts+yc)</span></a>
+                    <a href="https://github.com/LittleYouran/LittleYouran.github.io/tree/main/docs/files/一加 资源" target="_blank" class="zip-btn">一加 资源</a>
+                    <a href="https://github.com/LittleYouran/LittleYouran.github.io/tree/main/docs/files/小米 资源" target="_blank" class="zip-btn">小米 资源</a>
+                    <a href="https://github.com/LittleYouran/LittleYouran.github.io/tree/main/docs/files/调度 资源" target="_blank" class="zip-btn">调度 资源</a>
+                    <a href="https://github.com/LittleYouran/LittleYouran.github.io/tree/main/docs/files/调整震动" target="_blank" class="zip-btn">调整震动</a>
+                    <a href="https://github.com/LittleYouran/LittleYouran.github.io/tree/main/docs/files/音效模块" target="_blank" class="zip-btn">音效模块</a>
+                </div>
             </div>
         </div>
 
