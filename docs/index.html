@@ -166,39 +166,38 @@
             cursor: pointer;
         }
 
-        /* 缩小网格间距，让缩略图更紧凑 */
+        /* 调整网格尺寸，平衡清晰与布局 */
         .image-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 18px;
             list-style: none;
         }
 
         .image-item {
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 8px;
+            padding: 10px;
             text-align: center;
             background: var(--bg-highlight);
             transform: translateZ(0);
         }
 
-        /* 高清缩略图核心样式：强制原图尺寸+抗锯齿 */
+        /* 高清img标签核心：抗锯齿+防压缩 */
         .image-thumbnail {
             width: 100%;
-            height: 140px;
-            /* 关键：用background加载原图，避免img标签的压缩 */
-            background-position: center;
-            background-size: cover;
-            background-repeat: no-repeat;
+            height: 130px;
+            object-fit: cover;
+            object-position: center;
             border-radius: 6px;
             margin-bottom: 8px;
             opacity: 0;
             transition: opacity 0.3s ease-in-out;
-            /* 抗锯齿+高清渲染 */
-            image-rendering: pixelated;
-            image-rendering: -moz-crisp-edges;
+            /* 关键高清属性，解决模糊 */
+            image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
+            /* 禁止浏览器自动压缩 */
+            -webkit-transform: translateZ(0);
         }
 
         .image-thumbnail.loaded {
@@ -233,7 +232,7 @@
 
         @media (max-width: 600px) {
             .image-list {
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             }
             .list-header {
                 flex-direction: column;
@@ -366,7 +365,7 @@
             document.getElementById("list-search").value = "";
         }
 
-        // ========== 核心修复：用background加载原图，避免压缩 ==========
+        // ========== 恢复img标签渲染，保证图片显示 ==========
         function renderList(list) {
             const container = document.getElementById("image-list-container");
             if(list.length === 0) {
@@ -374,23 +373,18 @@
                 return;
             }
 
-            container.innerHTML = list.map((img, index) => `
+            container.innerHTML = list.map(img => `
                 <li class="image-item">
-                    <div 
+                    <img 
+                        src="${img.download_url}" 
+                        alt="${img.name}" 
                         class="image-thumbnail"
-                        id="thumb-${index}"
-                        style="background-image: url(${img.download_url})"
-                        onload="document.getElementById('thumb-${index}').classList.add('loaded')"
-                    ></div>
+                        onload="this.classList.add('loaded')"
+                        onerror="this.src='https://picsum.photos/190/130'; this.classList.add('loaded')"
+                    >
                     <a href="${img.download_url}" target="_blank" class="resource-link">${img.name}</a>
                 </li>
             `).join("");
-
-            // 强制触发背景图加载
-            list.forEach((_, index) => {
-                const thumb = document.getElementById(`thumb-${index}`);
-                if(thumb) thumb.style.backgroundImage = thumb.style.backgroundImage;
-            });
         }
 
         // 搜索功能
