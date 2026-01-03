@@ -32,7 +32,6 @@
             color: var(--text-color);
             padding: clamp(10px, 3vw, 20px);
             overflow-x: hidden;
-            /* 备用背景图 */
             background-image: url(https://picsum.photos/1920/1080);
         }
 
@@ -187,7 +186,7 @@
             text-decoration: underline;
         }
 
-        .empty-tip {
+        .empty-tip, .error-tip {
             color: var(--text-highlight);
             text-align: center;
             padding: 50px 0;
@@ -248,7 +247,7 @@
             <a href="javascript:void(0)" class="back-home" onclick="closeList()">← 返回首页</a>
             <h2 id="list-title"></h2>
             <div class="search-box">
-                <input type="text" class="search-input" id="list-search" placeholder="输入文件名搜索">
+                <input type="text" class="search-input" id="list-search" placeholder="输入文件名（含后缀）搜索">
                 <button class="search-btn" id="list-search-btn" onclick="doSearch()">搜索</button>
             </div>
             <select class="sort-select" id="sort-select" onchange="doSort()">
@@ -256,99 +255,104 @@
                 <option value="name-desc">文件名降序</option>
             </select>
         </div>
-        <ul class="image-list" id="image-list-container"></ul>
+        <ul class="image-list" id="image-list-container">
+            <li class="empty-tip">加载中...</li>
+        </ul>
     </div>
 
     <script>
-        // ========== 手动配置壁纸数据（核心！替换成你自己的图片链接和名称） ==========
-        const wallpaperData = {
-            // 横屏壁纸：name 是文件名（不带后缀），url 是图片链接
-            landscape: [
-                { name: "风景1", url: "https://picsum.photos/id/10/1920/1080" },
-                { name: "风景2", url: "https://picsum.photos/id/11/1920/1080" },
-                { name: "动漫1", url: "https://picsum.photos/id/12/1920/1080" }
-                // 自己加更多：{ name: "xxx", url: "图片链接" },
-            ],
-            // 竖屏壁纸
-            portrait: [
-                { name: "手机风景1", url: "https://picsum.photos/id/20/1080/1920" },
-                { name: "手机动漫1", url: "https://picsum.photos/id/21/1080/1920" }
-                // 自己加更多
-            ]
-        };
+        // ========== 这里改成你的 GitHub 信息 ==========
+        const USER_NAME = "LittleYouran";
+        const REPO_NAME = "LittleYouran.github.io";
+        const BASE_PATH = "docs/files";
+        // =============================================
 
-        let currentType = ""; // 当前显示的是横屏/竖屏
-        let currentList = []; // 当前显示的图片列表
+        let currentType = "";
+        let allImages = [];
 
-        // 检测设备类型
+        // 检测设备+随机背景
         function detectDevice() {
             const isMobile = window.innerWidth <= 600;
             document.getElementById("device-type").textContent = isMobile ? "手机" : "电脑/平板";
-            // 随机设置背景
-            const bgList = isMobile ? wallpaperData.portrait : wallpaperData.landscape;
-            const randomBg = bgList[Math.floor(Math.random() * bgList.length)];
-            document.body.style.backgroundImage = `url(${randomBg.url})`;
+            // 加载对应分类的图片做背景
+            const folder = isMobile ? `${BASE_PATH}/竖屏` : `${BASE_PATH}/横屏`;
+            fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${folder}`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.message) throw new Error("获取背景失败");
+                const images = data.filter(f => ["jpg","png","jpeg","gif"].includes(f.name.split(".").pop().toLowerCase()));
+                const randomImg = images[Math.floor(Math.random() * images.length)];
+                document.body.style.backgroundImage = `url(${randomImg.download_url})`;
+            }).catch(err => console.log(err));
         }
 
-        // 打开壁纸列表页
+        // 打开壁纸列表
         function openList(type) {
             currentType = type;
-            currentList = [...wallpaperData[type]];
-            // 设置标题
+            const folder = type === "landscape" ? `${BASE_PATH}/横屏` : `${BASE_PATH}/竖屏`;
             document.getElementById("list-title").textContent = type === "landscape" ? "横屏壁纸" : "竖屏壁纸";
-            // 显示列表页，隐藏首页
             document.getElementById("home-page").style.display = "none";
             document.getElementById("list-page").style.display = "block";
-            // 渲染列表
-            renderList(currentList);
+            document.getElementById("image-list-container").innerHTML = "<li class='empty-tip'>加载中...</li>";
+
+            // 读取仓库里的图片
+            fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${folder}`)
+            .then(res => {
+                if(!res.ok) throw new Error("API请求失败");
+                return res.json();
+            })
+            .then(data => {
+                // 过滤出图片文件
+                allImages = data.filter(f => ["jpg","png","jpeg","gif"].includes(f.name.split(".").pop().toLowerCase()));
+                renderList(allImages);
+            })
+            .catch(err => {
+                document.getElementById("image-list-container").innerHTML = `<li class='error-tip'>加载失败: ${err.message}</li>`;
+            });
         }
 
-        // 关闭列表页，返回首页
+        // 关闭列表
         function closeList() {
             document.getElementById("list-page").style.display = "none";
             document.getElementById("home-page").style.display = "block";
             document.getElementById("list-search").value = "";
         }
 
-        // 渲染图片列表
+        // 渲染列表
         function renderList(list) {
             const container = document.getElementById("image-list-container");
-            if (list.length === 0) {
-                container.innerHTML = `<li class="empty-tip">暂无壁纸</li>`;
+            if(list.length === 0) {
+                container.innerHTML = "<li class='empty-tip'>暂无壁纸</li>";
                 return;
             }
-            container.innerHTML = list.map(item => `
+            container.innerHTML = list.map(img => `
                 <li class="image-item">
-                    <img src="${item.url}" alt="${item.name}" class="image-thumbnail">
-                    <a href="${item.url}" target="_blank" class="resource-link">${item.name}</a>
+                    <img src="${img.download_url}" alt="${img.name}" class="image-thumbnail">
+                    <a href="${img.download_url}" target="_blank" class="resource-link">${img.name}</a>
                 </li>
             `).join("");
         }
 
-        // 搜索功能（100% 生效）
+        // ========== 彻底修复搜索功能 ==========
         function doSearch() {
-            const keyword = document.getElementById("list-search").value.trim().toLowerCase();
-            if (!keyword) {
-                renderList(currentList);
+            const keyword = document.getElementById("list-search").value.trim();
+            if(!keyword) {
+                renderList(allImages);
                 return;
             }
-            // 精准匹配文件名
-            const filtered = currentList.filter(item => item.name.toLowerCase() === keyword);
+            // 直接匹配完整文件名（含后缀），比如搜"风景1.jpg"就能找到
+            const filtered = allImages.filter(img => img.name.toLowerCase().includes(keyword.toLowerCase()));
             renderList(filtered);
         }
 
         // 排序功能
         function doSort() {
             const sortType = document.getElementById("sort-select").value;
-            if (sortType === "name-asc") {
-                currentList.sort((a, b) => a.name.localeCompare(b.name));
-            } else {
-                currentList.sort((a, b) => b.name.localeCompare(a.name));
-            }
-            renderList(currentList);
+            const sorted = [...allImages];
+            sorted.sort((a,b) => sortType === "name-asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+            renderList(sorted);
         }
 
-        // 页面加载时执行
         window.onload = detectDevice;
     </script>
 </body>
