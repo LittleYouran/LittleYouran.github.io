@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>LittleYouran呀</title>
+    <title>LittleYouran呀 - 资源站</title>
     <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
     <style>
         * {
@@ -44,6 +44,11 @@
             overflow-x: hidden;
             background-color: #1a1a1a;
             transform: translateZ(0);
+        }
+
+        /* 首页样式 */
+        #home-page {
+            display: block;
         }
 
         #header{
@@ -118,10 +123,8 @@
             border-radius: 8px;
             border: 1px solid var(--border-color);
             transform: translateZ(0);
-            display: block !important;
         }
 
-        /* 资源模块通用样式 */
         .resource-module {
             margin-top: 15px;
             padding: 12px;
@@ -138,7 +141,6 @@
             margin-bottom: 20px;
         }
 
-        /* 壁纸资源按钮容器（纵向） */
         .wallpaper-btn-group {
             display: flex;
             flex-direction: column;
@@ -146,7 +148,6 @@
             align-items: center;
         }
 
-        /* 壁纸资源按钮 */
         .link-btn {
             padding: 10px 20px;
             background: var(--bg-highlight);
@@ -165,7 +166,6 @@
             transition: all 0.2s ease;
         }
 
-        /* 文件夹按钮容器（横向流式） */
         .folder-btn-group {
             display: flex;
             flex-wrap: wrap;
@@ -175,7 +175,6 @@
             padding: 0 5px;
         }
 
-        /* 文件夹按钮 */
         .folder-btn {
             padding: 10px 15px;
             background: linear-gradient(135deg, rgba(50,50,50,0.3), rgba(30,30,30,0.3));
@@ -193,37 +192,136 @@
             border-color: #666;
         }
 
-        /* 特殊标注样式 */
         .tag {
             font-size: 12px;
             color: #ffd700;
             margin-left: 5px;
         }
 
-        /* 文件详情页容器 */
-        #file-detail-page {
-            display: none;
-            margin-top: 15px;
-            padding: 15px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
+        #footer{
+            text-align: center;
+            margin: 0 auto;
+            max-width: 90%;
+            font-size: 12px;
+            color: var(--text-highlight);
+            padding-bottom: 15px;
         }
 
-        /* 返回按钮 */
-        .back-btn {
-            padding: 8px 15px;
+        /* 独立列表页样式（无首页冗余内容） */
+        #list-standalone-page {
+            display: none;
+            width: 100vw;
+            min-height: 100vh;
+            padding: 15px;
+            background: inherit;
+        }
+
+        #folder-standalone-page {
+            display: none;
+            width: 100vw;
+            min-height: 100vh;
+            padding: 15px;
+            background: inherit;
+        }
+
+        .standalone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0 auto 20px;
+            max-width: 95%;
+            padding: 10px;
             background: var(--bg-highlight);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .standalone-title {
+            font-size: 18px;
+            color: var(--text-highlight);
+        }
+
+        .back-home-btn {
+            padding: 6px 12px;
+            background: var(--search-bg);
             border: 1px solid var(--border-color);
             border-radius: 4px;
-            color: var(--text-color);
+            color: var(--text-highlight);
             cursor: pointer;
-            margin-bottom: 10px;
-        }
-        .back-btn:hover {
-            background: var(--btn-hover);
+            text-decoration: none;
         }
 
-        /* 文件列表项（横向排版：名称左，按钮右） */
+        .standalone-search-box {
+            display: flex;
+            gap: 10px;
+            margin: 0 auto 20px;
+            max-width: 95%;
+        }
+
+        .standalone-search-input {
+            flex: 1;
+            padding: 8px 12px;
+            background: var(--search-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-highlight);
+            outline: none;
+        }
+
+        .standalone-search-btn, .standalone-sort-select {
+            padding: 8px 12px;
+            background: var(--search-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-highlight);
+            cursor: pointer;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 18px;
+            max-width: 95%;
+            margin: 0 auto;
+            list-style: none;
+        }
+
+        .image-card {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            background: var(--bg-highlight);
+            text-align: center;
+        }
+
+        .image-preview {
+            width: 100%;
+            height: 130px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .image-download-btn {
+            padding: 6px 12px;
+            background: var(--download-btn);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .file-list {
+            max-width: 95%;
+            margin: 0 auto;
+            background: var(--bg-highlight);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 15px;
+        }
+
         .file-item {
             display: flex;
             justify-content: space-between;
@@ -249,120 +347,11 @@
             cursor: pointer;
             white-space: nowrap;
         }
-        .file-download-btn:hover {
-            opacity: 0.9;
-        }
 
-        /* 其他原有样式保持不变 */
-        .list-page {
-            max-width: 95%;
-            margin: 0 auto;
-            padding: 15px;
-            display: none;
-            transform: translateZ(0);
-        }
-
-        .list-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .back-home {
-            color: var(--text-highlight);
-            text-decoration: none;
-            border: 1px solid var(--border-color);
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        .list-title {
-            font-size: 16px;
-            margin: 0;
-        }
-
-        .sort-select {
-            padding: 6px 10px;
-            background: var(--search-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            color: var(--text-highlight);
-            outline: none;
-            cursor: pointer;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-
-        .image-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 10px;
-            list-style: none;
-            margin-top: 15px;
-        }
-
-        .image-item {
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 8px;
-            text-align: center;
-            background: var(--bg-highlight);
-            transform: translateZ(0);
-            cursor: pointer;
-        }
-
-        .image-item:hover {
-            transform: scale(1.02);
-            transition: transform 0.2s ease;
-        }
-
-        .image-thumbnail {
-            width: 100%;
-            height: 90px;
-            object-fit: cover;
-            object-position: center;
-            border-radius: 6px;
-            margin-bottom: 5px;
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
-            image-rendering: -webkit-optimize-contrast;
-            image-rendering: crisp-edges;
-            -webkit-transform: translateZ(0);
-        }
-
-        .image-thumbnail.loaded {
-            opacity: 1;
-        }
-
-        .resource-link {
-            color: var(--text-highlight);
-            text-decoration: none;
-            font-size: 12px;
-        }
-
-        .resource-link:hover {
-            color: #ffd700;
-            text-decoration: underline;
-        }
-
-        .empty-tip, .error-tip {
-            color: var(--text-highlight);
+        .empty-tip {
             text-align: center;
             padding: 30px 0;
-            font-size: 14px;
-        }
-
-        #footer{
-            text-align: center;
-            margin: 0 auto;
-            max-width: 90%;
-            font-size: 12px;
             color: var(--text-highlight);
-            padding-bottom: 15px;
         }
 
         .preview-mask {
@@ -409,194 +398,262 @@
             cursor: pointer;
         }
 
-        @media (min-width: 600px) {
-            .search-box {
-                width: auto;
-                margin-top: 0;
+        @media (max-width: 600px) {
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 10px;
             }
-            .header-left h1 {
-                font-size: 20px;
-            }
-            .image-list {
-                grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-                gap: 18px;
-            }
-            .image-thumbnail {
-                height: 130px;
-            }
-            .folder-btn {
-                padding: 10px 20px;
+            .image-preview {
+                height: 90px;
             }
         }
     </style>
 </head>
 <body>
-    <div id="header">
-        <div class="header-left">
-            <img src="https://avatars.githubusercontent.com/u/179694017?v=4" class="avatar" alt="头像">
-            <h1>LittleYouran呀</h1>
-        </div>
-        <div class="search-box">
-            <input type="text" class="search-input" id="home-search" placeholder="先进入分类再搜索">
-            <button class="search-btn" id="home-search-btn" onclick="alert('请先进入横屏/竖屏分类')">搜索</button>
-        </div>
-    </div>
-
-    <div id="content">
-        <p>一只猫猫呀喵喵喵</p>
-
-        <!-- 壁纸资源模块（原有边框） -->
-        <div class="resource-module">
-            <h3>📥 壁纸资源</h3>
-            <div class="device-info">
-                当前设备：<span id="device-type">检测中...</span> | 刷新页面切换背景
+    <!-- 首页 -->
+    <div id="home-page">
+        <div id="header">
+            <div class="header-left">
+                <img src="https://avatars.githubusercontent.com/u/179694017?v=4" class="avatar" alt="头像">
+                <h1>LittleYouran呀</h1>
             </div>
-            <div class="wallpaper-btn-group">
-                <!-- 核心修改：点击跳转到新标签页的壁纸列表页 -->
-                <a href="javascript:void(0)" class="link-btn" onclick="openListInNewTab('landscape')">🖥️ 横屏壁纸</a>
-                <a href="javascript:void(0)" class="link-btn" onclick="openListInNewTab('portrait')">📱 竖屏壁纸</a>
-            </div>
-        </div>
-
-        <!-- 文件夹模块（横向流式） -->
-        <div class="resource-module">
-            <h3>📦 资源合集</h3>
-            <div class="folder-btn-group">
-                <!-- 核心修改：点击跳转到新标签页的文件夹详情页 -->
-                <div class="folder-btn" onclick="openFolderInNewTab('个人二改调度')">个人二改调度 <span class="tag">(含cts+yc)</span></div>
-                <div class="folder-btn" onclick="openFolderInNewTab('一加 资源')">一加 资源</div>
-                <div class="folder-btn" onclick="openFolderInNewTab('小米 资源')">小米 资源</div>
-                <div class="folder-btn" onclick="openFolderInNewTab('调度 资源')">调度 资源</div>
-                <div class="folder-btn" onclick="openFolderInNewTab('调整震动')">调整震动</div>
-                <div class="folder-btn" onclick="openFolderInNewTab('音效模块')">音效模块</div>
-            </div>
-        </div>
-
-        <!-- 文件详情页（默认隐藏） -->
-        <div id="file-detail-page">
-            <button class="back-btn" onclick="closeFolder()">← 返回资源列表</button>
-            <div id="file-list-container"></div>
-        </div>
-    </div>
-
-    <div id="list-page" class="list-page">
-        <div class="list-header">
-            <a href="javascript:void(0)" class="back-home" onclick="closeList()">← 返回首页</a>
-            <h2 class="list-title" id="list-title"></h2>
             <div class="search-box">
-                <input type="text" class="search-input" id="list-search" placeholder="输入文件名搜索">
-                <button class="search-btn" id="list-search-btn" onclick="doSearch()">搜索</button>
+                <input type="text" class="search-input" placeholder="先进入分类再搜索" disabled>
+                <button class="search-btn" onclick="alert('请先进入横屏/竖屏分类')">搜索</button>
             </div>
-            <select class="sort-select" id="sort-select" onchange="doSort()">
+        </div>
+
+        <div id="content">
+            <p>一只猫猫呀喵喵喵</p>
+
+            <div class="resource-module">
+                <h3>📥 壁纸资源</h3>
+                <div class="device-info" id="device-type">当前设备：检测中...</div>
+                <div class="wallpaper-btn-group">
+                    <div class="link-btn" onclick="openWallpaperList('landscape')">🖥️ 横屏壁纸</div>
+                    <div class="link-btn" onclick="openWallpaperList('portrait')">📱 竖屏壁纸</div>
+                </div>
+            </div>
+
+            <div class="resource-module">
+                <h3>📦 资源合集</h3>
+                <div class="folder-btn-group">
+                    <div class="folder-btn" onclick="openFolderPage('个人二改调度')">个人二改调度 <span class="tag">(含cts+yc)</span></div>
+                    <div class="folder-btn" onclick="openFolderPage('一加 资源')">一加 资源</div>
+                    <div class="folder-btn" onclick="openFolderPage('小米 资源')">小米 资源</div>
+                    <div class="folder-btn" onclick="openFolderPage('调度 资源')">调度 资源</div>
+                    <div class="folder-btn" onclick="openFolderPage('调整震动')">调整震动</div>
+                    <div class="folder-btn" onclick="openFolderPage('音效模块')">音效模块</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="footer">
+            Copyright © 2026 LittleYouran呀
+        </div>
+    </div>
+
+    <!-- 独立壁纸列表页（无首页冗余内容） -->
+    <div id="list-standalone-page">
+        <div class="standalone-header">
+            <h2 class="standalone-title" id="wallpaper-list-title">横屏壁纸</h2>
+            <a href="javascript:void(0)" class="back-home-btn" onclick="backToHome()">← 返回首页</a>
+        </div>
+
+        <div class="standalone-search-box">
+            <input type="text" class="standalone-search-input" id="wallpaper-search" placeholder="输入壁纸名搜索">
+            <button class="standalone-search-btn" onclick="searchWallpaper()">搜索</button>
+            <select class="standalone-sort-select" id="wallpaper-sort" onchange="sortWallpaper()">
                 <option value="name-asc">文件名升序</option>
                 <option value="name-desc">文件名降序</option>
             </select>
         </div>
-        <ul class="image-list" id="image-list-container">
-            <li class='empty-tip'>加载中...</li>
+
+        <ul class="image-grid" id="wallpaper-grid">
+            <li class="empty-tip">加载中...</li>
         </ul>
     </div>
 
-    <div class="preview-mask" id="preview-mask" onclick="closePreview()">
-        <div class="preview-container" onclick="event.stopPropagation()">
-            <img src="" alt="预览图" class="preview-img" id="preview-img">
-            <div class="preview-close" id="preview-close" onclick="closePreview()">×</div>
+    <!-- 独立文件夹详情页（无首页冗余内容） -->
+    <div id="folder-standalone-page">
+        <div class="standalone-header">
+            <h2 class="standalone-title" id="folder-page-title">个人二改调度</h2>
+            <a href="javascript:void(0)" class="back-home-btn" onclick="backToHome()">← 返回首页</a>
+        </div>
+
+        <div class="file-list" id="folder-file-list">
+            <p class="empty-tip">加载中...</p>
         </div>
     </div>
 
-    <div id="footer">
-        Copyright © 2026 LittleYouran呀
+    <!-- 预览弹窗 -->
+    <div class="preview-mask" id="preview-mask" onclick="closePreview()">
+        <div class="preview-container" onclick="event.stopPropagation()">
+            <img src="" alt="预览图" class="preview-img" id="preview-img">
+            <div class="preview-close" onclick="closePreview()">×</div>
+        </div>
     </div>
 
     <script>
-        // ========== 改成你的 GitHub 信息 ==========
+        // 配置信息
         const USER_NAME = "LittleYouran";
         const REPO_NAME = "LittleYouran.github.io";
         const BASE_PATH = "docs/files";
         const BACKUP_BG = "https://picsum.photos/1080/1920";
-        // =============================================
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-        let currentType = "";
-        let allImages = [];
-        let bgCache = { landscape: [], portrait: [] };
-        let currentFolder = "";
-        let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        // 全局变量
+        let wallpaperData = [];
 
-        // 核心新增：在新标签页打开文件夹详情页
-        function openFolderInNewTab(folderName) {
-            // 构建新标签页的URL（带文件夹参数）
-            const newTabUrl = `${window.location.origin}${window.location.pathname}?folder=${encodeURIComponent(folderName)}`;
-            window.open(newTabUrl, '_blank');
+        // 页面初始化
+        window.onload = function() {
+            detectDevice();
+            setRandomBg();
+        };
+
+        // 检测设备并设置背景
+        function detectDevice() {
+            const deviceText = isMobile ? "手机" : "电脑/平板";
+            document.getElementById("device-type").innerText = `当前设备：${deviceText} | 刷新页面切换背景`;
         }
 
-        // 核心新增：在新标签页打开壁纸列表页
-        function openListInNewTab(type) {
-            const newTabUrl = `${window.location.origin}${window.location.pathname}?list=${type}`;
-            window.open(newTabUrl, '_blank');
-        }
-
-        // 页面加载时检查URL参数，自动打开对应页面
-        window.addEventListener('DOMContentLoaded', () => {
-            const params = new URLSearchParams(window.location.search);
-            const folderName = params.get('folder');
-            const listType = params.get('list');
-
-            if (folderName) {
-                openFolder(folderName);
-            } else if (listType) {
-                openList(listType);
-            }
-        });
-
-        // 打开文件夹（当前标签页内显示，不跳转）
-        async function openFolder(folderName) {
-            currentFolder = folderName;
-            const fileListContainer = document.getElementById("file-list-container");
-            fileListContainer.innerHTML = "<p style='color:#eee'>加载文件列表中...</p>";
-            
+        // 设置随机背景图
+        async function setRandomBg() {
+            const folder = isMobile ? `${BASE_PATH}/竖屏` : `${BASE_PATH}/横屏`;
             try {
-                const folderUrl = `https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${BASE_PATH}/${folderName}`;
-                const response = await fetch(folderUrl);
-                if (!response.ok) throw new Error("文件夹不存在或无权限");
-
-                const files = await response.json();
-                const fileItems = files.filter(item => item.type === "file");
-
-                if (fileItems.length === 0) {
-                    fileListContainer.innerHTML = "<p style='color:#eee'>该文件夹内暂无文件</p>";
+                const res = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${folder}`);
+                const data = await res.json();
+                const images = data.filter(f => ["jpg","png","jpeg","gif"].includes(f.name.split(".").pop().toLowerCase()));
+                if(images.length > 0) {
+                    const randomImg = images[Math.floor(Math.random() * images.length)];
+                    document.body.style.backgroundImage = `url(${randomImg.download_url})`;
                 } else {
-                    let html = "";
-                    fileItems.forEach(file => {
-                        // 核心修改：下载按钮直接在当前页面触发下载，不跳转
-                        html += `
-                            <div class="file-item">
-                                <div class="file-name">${file.name}</div>
-                                <button class="file-download-btn" onclick="downloadInCurrentTab('${file.download_url}', '${file.name}')">下载</button>
-                            </div>
-                        `;
-                    });
-                    fileListContainer.innerHTML = html;
+                    document.body.style.backgroundImage = `url(${BACKUP_BG})`;
+                }
+            } catch (err) {
+                document.body.style.backgroundImage = `url(${BACKUP_BG})`;
+            }
+        }
+
+        // 打开独立壁纸列表页
+        async function openWallpaperList(type) {
+            document.getElementById("home-page").style.display = "none";
+            document.getElementById("folder-standalone-page").style.display = "none";
+            document.getElementById("list-standalone-page").style.display = "block";
+            
+            const title = type === "landscape" ? "横屏壁纸" : "竖屏壁纸";
+            document.getElementById("wallpaper-list-title").innerText = title;
+            document.getElementById("wallpaper-grid").innerHTML = "<li class='empty-tip'>加载中...</li>";
+
+            try {
+                const res = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${BASE_PATH}/${type === "landscape" ? "横屏" : "竖屏"}`);
+                const data = await res.json();
+                wallpaperData = data.filter(f => ["jpg","png","jpeg","gif"].includes(f.name.split(".").pop().toLowerCase()));
+                renderWallpaperGrid(wallpaperData);
+            } catch (err) {
+                document.getElementById("wallpaper-grid").innerHTML = "<li class='empty-tip'>壁纸加载失败</li>";
+            }
+        }
+
+        // 渲染壁纸网格
+        function renderWallpaperGrid(data) {
+            if(data.length === 0) {
+                document.getElementById("wallpaper-grid").innerHTML = "<li class='empty-tip'>暂无壁纸</li>";
+                return;
+            }
+
+            let html = "";
+            data.forEach(img => {
+                html += `
+                    <li class="image-card">
+                        <img src="${img.download_url}" alt="${img.name}" class="image-preview" onclick="openPreview('${img.download_url}')">
+                        <button class="image-download-btn" onclick="downloadFile('${img.download_url}', '${img.name}')">下载</button>
+                    </li>
+                `;
+            });
+            document.getElementById("wallpaper-grid").innerHTML = html;
+        }
+
+        // 打开独立文件夹页
+        async function openFolderPage(folderName) {
+            document.getElementById("home-page").style.display = "none";
+            document.getElementById("list-standalone-page").style.display = "none";
+            document.getElementById("folder-standalone-page").style.display = "block";
+            
+            document.getElementById("folder-page-title").innerText = folderName;
+            document.getElementById("folder-file-list").innerHTML = "<p class='empty-tip'>加载中...</p>";
+
+            try {
+                const res = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${BASE_PATH}/${folderName}`);
+                const data = await res.json();
+                const files = data.filter(item => item.type === "file");
+                
+                if(files.length === 0) {
+                    document.getElementById("folder-file-list").innerHTML = "<p class='empty-tip'>该文件夹内暂无文件</p>";
+                    return;
                 }
 
-                document.getElementById("file-detail-page").style.display = "block";
+                let html = "";
+                files.forEach(file => {
+                    html += `
+                        <div class="file-item">
+                            <div class="file-name">${file.name}</div>
+                            <button class="file-download-btn" onclick="downloadFile('${file.download_url}', '${file.name}')">下载</button>
+                        </div>
+                    `;
+                });
+                document.getElementById("folder-file-list").innerHTML = html;
             } catch (err) {
-                fileListContainer.innerHTML = `<p style='color:#ff4444'>加载失败：${err.message}</p>`;
-                console.error(err);
+                document.getElementById("folder-file-list").innerHTML = "<p class='empty-tip'>文件加载失败</p>";
             }
         }
 
-        // 关闭文件夹详情页
-        function closeFolder() {
-            document.getElementById("file-detail-page").style.display = "none";
-            currentFolder = "";
-            // 清除URL参数，返回首页状态
-            history.replaceState({}, document.title, window.location.pathname);
+        // 返回首页
+        function backToHome() {
+            document.getElementById("home-page").style.display = "block";
+            document.getElementById("list-standalone-page").style.display = "none";
+            document.getElementById("folder-standalone-page").style.display = "none";
         }
 
-        // 下载单个文件（当前标签页内触发，不跳转）
-        function downloadInCurrentTab(downloadUrl, fileName) {
+        // 壁纸搜索
+        function searchWallpaper() {
+            const keyword = document.getElementById("wallpaper-search").value.trim().toLowerCase();
+            if(!keyword) {
+                renderWallpaperGrid(wallpaperData);
+                return;
+            }
+            const filtered = wallpaperData.filter(img => img.name.toLowerCase().includes(keyword));
+            renderWallpaperGrid(filtered);
+        }
+
+        // 壁纸排序
+        function sortWallpaper() {
+            const sortType = document.getElementById("wallpaper-sort").value;
+            const sorted = [...wallpaperData];
+            sorted.sort((a,b) => {
+                return sortType === "name-asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+            });
+            renderWallpaperGrid(sorted);
+        }
+
+        // 预览壁纸
+        function openPreview(imgUrl) {
+            document.getElementById("preview-img").src = imgUrl;
+            document.getElementById("preview-mask").style.display = "flex";
+            document.body.style.overflow = "hidden";
+        }
+
+        // 关闭预览
+        function closePreview() {
+            document.getElementById("preview-mask").style.display = "none";
+            document.getElementById("preview-img").src = "";
+            document.body.style.overflow = "auto";
+        }
+
+        // 下载文件
+        function downloadFile(url, fileName) {
             const a = document.createElement('a');
-            a.href = downloadUrl;
+            a.href = url;
             a.download = fileName;
             a.style.display = 'none';
             document.body.appendChild(a);
@@ -604,139 +661,6 @@
             document.body.removeChild(a);
             alert(`开始下载：${fileName}`);
         }
-
-        // 恢复上一版壁纸预览（弹窗模式），不影响浏览
-        function detectDevice() {
-            const deviceText = isMobile ? "手机" : "电脑/平板";
-            const folder = isMobile ? `${BASE_PATH}/竖屏` : `${BASE_PATH}/横屏`;
-            const cacheKey = isMobile ? "portrait" : "landscape";
-
-            document.getElementById("device-type").textContent = deviceText;
-
-            loadImages(folder, cacheKey).then(images => {
-                if(images.length > 0) {
-                    const randomImg = images[Math.floor(Math.random()*images.length)];
-                    document.body.style.backgroundImage = `url(${randomImg.download_url})`;
-                } else {
-                    document.body.style.backgroundImage = `url(${BACKUP_BG})`;
-                }
-            }).catch(() => {
-                document.body.style.backgroundImage = `url(${BACKUP_BG})`;
-            });
-        }
-
-        // 加载图片：添加超时+错误重试，修复手机端加载失败
-        async function loadImages(folder, cacheKey) {
-            if(bgCache[cacheKey].length > 0) return bgCache[cacheKey];
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
-                const response = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${folder}`, {
-                    signal: controller.signal,
-                    headers: { 'Accept': 'application/vnd.github.v3+json' }
-                });
-                clearTimeout(timeoutId);
-                if(!response.ok) throw new Error("加载失败");
-                const data = await response.json();
-                const images = data.filter(f => ["jpg","png","jpeg","gif"].includes(f.name.split(".").pop().toLowerCase()));
-                bgCache[cacheKey] = images;
-                return images;
-            } catch (err) {
-                console.log(err);
-                return [{download_url: BACKUP_BG, name: 'backup.jpg'}];
-            }
-        }
-
-        // 打开壁纸列表（当前标签页内显示，不跳转）
-        async function openList(type) {
-            currentType = type;
-            const folder = type === "landscape" ? `${BASE_PATH}/横屏` : `${BASE_PATH}/竖屏`;
-            document.getElementById("list-title").textContent = type === "landscape" ? "横屏壁纸" : "竖屏壁纸";
-            document.getElementById("content").style.display = "none";
-            document.getElementById("list-page").style.display = "block";
-            document.getElementById("image-list-container").innerHTML = "<li class='empty-tip'>加载中...</li>";
-
-            try {
-                const images = await loadImages(folder, type);
-                allImages = images;
-                renderList(images);
-            } catch (err) {
-                document.getElementById("image-list-container").innerHTML = `<li class='error-tip'>壁纸加载失败</li>`;
-            }
-        }
-
-        // 关闭壁纸列表
-        function closeList() {
-            document.getElementById("list-page").style.display = "none";
-            document.getElementById("content").style.display = "block";
-            history.replaceState({}, document.title, window.location.pathname);
-        }
-
-        // 渲染壁纸列表：预览在当前页面弹窗，下载在当前页面触发
-        function renderList(list) {
-            const container = document.getElementById("image-list-container");
-            if(list.length === 0) {
-                container.innerHTML = "<li class='empty-tip'>暂无壁纸</li>";
-                return;
-            }
-
-            let html = "";
-            list.forEach(img => {
-                // 点击壁纸弹窗预览，不跳转；下载按钮直接触发下载
-                html += `
-                    <li class="image-item" onclick="openPreview('${img.download_url}')">
-                        <img src="${img.download_url}" alt="${img.name}" class="image-thumbnail" onload="this.classList.add('loaded')" onerror="this.src='https://picsum.photos/120/90';this.classList.add('loaded')">
-                        <button class="file-download-btn" onclick="event.stopPropagation();downloadInCurrentTab('${img.download_url}', '${img.name}')">下载</button>
-                    </li>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        // 弹窗预览（当前页面内，不跳转）
-        function openPreview(imgUrl) {
-            const previewMask = document.getElementById("preview-mask");
-            const previewImg = document.getElementById("preview-img");
-            previewImg.src = imgUrl;
-            previewMask.style.display = "flex";
-            document.body.style.overflow = "hidden";
-        }
-
-        function closePreview() {
-            const previewMask = document.getElementById("preview-mask");
-            const previewImg = document.getElementById("preview-img");
-            previewMask.style.display = "none";
-            previewImg.src = "";
-            document.body.style.overflow = "auto";
-        }
-
-        // 搜索+排序功能保持不变
-        function doSearch() {
-            const keyword = document.getElementById("list-search").value.trim().toLowerCase();
-            if(!keyword) {
-                renderList(allImages);
-                return;
-            }
-            const filtered = allImages.filter(img => img.name.toLowerCase().includes(keyword));
-            renderList(filtered);
-        }
-
-        function doSort() {
-            const sortType = document.getElementById("sort-select").value;
-            const sorted = [...allImages];
-            sorted.sort((a,b) => sortType === "name-asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
-            renderList(sorted);
-        }
-
-        document.getElementById("list-search").addEventListener("keydown", function(e) {
-            if(e.key === "Enter") doSearch();
-        });
-
-        document.addEventListener("keydown", function(e) {
-            if(e.key === "Escape") closePreview();
-        });
-
-        window.onload = detectDevice;
     </script>
 </body>
 </html>
