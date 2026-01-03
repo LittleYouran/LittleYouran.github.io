@@ -452,8 +452,9 @@
                 当前设备：<span id="device-type">检测中...</span> | 刷新页面切换背景
             </div>
             <div class="wallpaper-btn-group">
-                <a href="javascript:void(0)" class="link-btn" onclick="openList('landscape')">🖥️ 横屏壁纸</a>
-                <a href="javascript:void(0)" class="link-btn" onclick="openList('portrait')">📱 竖屏壁纸</a>
+                <!-- 核心修改：点击跳转到新标签页的壁纸列表页 -->
+                <a href="javascript:void(0)" class="link-btn" onclick="openListInNewTab('landscape')">🖥️ 横屏壁纸</a>
+                <a href="javascript:void(0)" class="link-btn" onclick="openListInNewTab('portrait')">📱 竖屏壁纸</a>
             </div>
         </div>
 
@@ -461,12 +462,13 @@
         <div class="resource-module">
             <h3>📦 资源合集</h3>
             <div class="folder-btn-group">
-                <div class="folder-btn" onclick="openFolder('个人二改调度')">个人二改调度 <span class="tag">(含cts+yc)</span></div>
-                <div class="folder-btn" onclick="openFolder('一加 资源')">一加 资源</div>
-                <div class="folder-btn" onclick="openFolder('小米 资源')">小米 资源</div>
-                <div class="folder-btn" onclick="openFolder('调度 资源')">调度 资源</div>
-                <div class="folder-btn" onclick="openFolder('调整震动')">调整震动</div>
-                <div class="folder-btn" onclick="openFolder('音效模块')">音效模块</div>
+                <!-- 核心修改：点击跳转到新标签页的文件夹详情页 -->
+                <div class="folder-btn" onclick="openFolderInNewTab('个人二改调度')">个人二改调度 <span class="tag">(含cts+yc)</span></div>
+                <div class="folder-btn" onclick="openFolderInNewTab('一加 资源')">一加 资源</div>
+                <div class="folder-btn" onclick="openFolderInNewTab('小米 资源')">小米 资源</div>
+                <div class="folder-btn" onclick="openFolderInNewTab('调度 资源')">调度 资源</div>
+                <div class="folder-btn" onclick="openFolderInNewTab('调整震动')">调整震动</div>
+                <div class="folder-btn" onclick="openFolderInNewTab('音效模块')">音效模块</div>
             </div>
         </div>
 
@@ -520,7 +522,33 @@
         let currentFolder = "";
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-        // 打开文件夹：所有文件下载都在新标签页完成
+        // 核心新增：在新标签页打开文件夹详情页
+        function openFolderInNewTab(folderName) {
+            // 构建新标签页的URL（带文件夹参数）
+            const newTabUrl = `${window.location.origin}${window.location.pathname}?folder=${encodeURIComponent(folderName)}`;
+            window.open(newTabUrl, '_blank');
+        }
+
+        // 核心新增：在新标签页打开壁纸列表页
+        function openListInNewTab(type) {
+            const newTabUrl = `${window.location.origin}${window.location.pathname}?list=${type}`;
+            window.open(newTabUrl, '_blank');
+        }
+
+        // 页面加载时检查URL参数，自动打开对应页面
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const folderName = params.get('folder');
+            const listType = params.get('list');
+
+            if (folderName) {
+                openFolder(folderName);
+            } else if (listType) {
+                openList(listType);
+            }
+        });
+
+        // 打开文件夹（当前标签页内显示，不跳转）
         async function openFolder(folderName) {
             currentFolder = folderName;
             const fileListContainer = document.getElementById("file-list-container");
@@ -539,11 +567,11 @@
                 } else {
                     let html = "";
                     fileItems.forEach(file => {
-                        // 核心修改：用window.open在新标签页下载，避免当前页混乱
+                        // 核心修改：下载按钮直接在当前页面触发下载，不跳转
                         html += `
                             <div class="file-item">
                                 <div class="file-name">${file.name}</div>
-                                <button class="file-download-btn" onclick="downloadInNewTab('${file.download_url}', '${file.name}')">下载</button>
+                                <button class="file-download-btn" onclick="downloadInCurrentTab('${file.download_url}', '${file.name}')">下载</button>
                             </div>
                         `;
                     });
@@ -561,19 +589,20 @@
         function closeFolder() {
             document.getElementById("file-detail-page").style.display = "none";
             currentFolder = "";
+            // 清除URL参数，返回首页状态
+            history.replaceState({}, document.title, window.location.pathname);
         }
 
-        // 新标签页下载：使用window.open，避免当前页面混乱
-        function downloadInNewTab(downloadUrl, fileName) {
-            // 打开新标签页下载，同时提示用户
-            const newTab = window.open(downloadUrl, '_blank');
-            setTimeout(() => {
-                alert(`已在新标签页开始下载：${fileName}`);
-                // 部分浏览器可能需要延迟关闭空白页（如文件直接下载时）
-                if (newTab && newTab.location.href === 'about:blank') {
-                    setTimeout(() => newTab.close(), 1000);
-                }
-            }, 500);
+        // 下载单个文件（当前标签页内触发，不跳转）
+        function downloadInCurrentTab(downloadUrl, fileName) {
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = fileName;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            alert(`开始下载：${fileName}`);
         }
 
         // 恢复上一版壁纸预览（弹窗模式），不影响浏览
@@ -618,7 +647,7 @@
             }
         }
 
-        // 打开壁纸列表：恢复弹窗预览
+        // 打开壁纸列表（当前标签页内显示，不跳转）
         async function openList(type) {
             currentType = type;
             const folder = type === "landscape" ? `${BASE_PATH}/横屏` : `${BASE_PATH}/竖屏`;
@@ -640,9 +669,10 @@
         function closeList() {
             document.getElementById("list-page").style.display = "none";
             document.getElementById("content").style.display = "block";
+            history.replaceState({}, document.title, window.location.pathname);
         }
 
-        // 渲染壁纸列表：恢复弹窗预览，不跳新标签
+        // 渲染壁纸列表：预览在当前页面弹窗，下载在当前页面触发
         function renderList(list) {
             const container = document.getElementById("image-list-container");
             if(list.length === 0) {
@@ -652,18 +682,18 @@
 
             let html = "";
             list.forEach(img => {
-                // 恢复上一版：点击壁纸弹窗预览，不跳新标签
+                // 点击壁纸弹窗预览，不跳转；下载按钮直接触发下载
                 html += `
                     <li class="image-item" onclick="openPreview('${img.download_url}')">
                         <img src="${img.download_url}" alt="${img.name}" class="image-thumbnail" onload="this.classList.add('loaded')" onerror="this.src='https://picsum.photos/120/90';this.classList.add('loaded')">
-                        <a href="${img.download_url}" class="resource-link" onclick="event.stopPropagation();downloadInNewTab('${img.download_url}', '${img.name}')">下载</a>
+                        <button class="file-download-btn" onclick="event.stopPropagation();downloadInCurrentTab('${img.download_url}', '${img.name}')">下载</button>
                     </li>
                 `;
             });
             container.innerHTML = html;
         }
 
-        // 弹窗预览（恢复上一版）
+        // 弹窗预览（当前页面内，不跳转）
         function openPreview(imgUrl) {
             const previewMask = document.getElementById("preview-mask");
             const previewImg = document.getElementById("preview-img");
