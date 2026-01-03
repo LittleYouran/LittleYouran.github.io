@@ -10,7 +10,8 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            transition: all 0.2s ease;
+            /* 全局关闭过渡，避免卡顿，仅关键元素开启 */
+            transition: none;
         }
 
         :root {
@@ -32,7 +33,10 @@
             color: var(--text-color);
             padding: clamp(10px, 3vw, 20px);
             overflow-x: hidden;
-            background-image: url(https://picsum.photos/1920/1080);
+            /* 初始背景设为纯色，杜绝加载闪烁 */
+            background-color: #1a1a1a;
+            /* 硬件加速，提升流畅度 */
+            transform: translateZ(0);
         }
 
         #header{
@@ -47,6 +51,7 @@
             border-radius: 8px;
             flex-wrap: wrap;
             gap: 15px;
+            transform: translateZ(0);
         }
 
         .avatar{
@@ -84,6 +89,7 @@
 
         .search-btn:hover {
             background: var(--btn-hover);
+            transition: background 0.2s ease;
         }
 
         #content{
@@ -93,6 +99,7 @@
             padding: 20px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
+            transform: translateZ(0);
         }
 
         .resource-wrap {
@@ -113,11 +120,13 @@
             color: var(--text-highlight);
             text-decoration: none;
             font-size: 16px;
+            transform: translateZ(0);
         }
 
         .link-btn:hover {
             transform: translateY(-2px);
             background: var(--btn-hover);
+            transition: all 0.2s ease;
         }
 
         .list-page {
@@ -125,6 +134,7 @@
             margin: 0 auto;
             padding: 20px;
             display: none;
+            transform: translateZ(0);
         }
 
         .list-header {
@@ -144,6 +154,11 @@
             border-radius: 4px;
         }
 
+        .back-home:hover {
+            background: var(--btn-hover);
+            transition: background 0.2s ease;
+        }
+
         .sort-select {
             padding: 6px 12px;
             background: var(--search-bg);
@@ -151,6 +166,7 @@
             border-radius: 4px;
             color: var(--text-highlight);
             outline: none;
+            cursor: pointer;
         }
 
         .image-list {
@@ -166,14 +182,26 @@
             padding: 12px;
             text-align: center;
             background: var(--bg-highlight);
+            transform: translateZ(0);
         }
 
+        /* 高清缩略图：固定尺寸+防拉伸+加载动画 */
         .image-thumbnail {
             width: 100%;
             height: 120px;
             object-fit: cover;
             border-radius: 6px;
             margin-bottom: 10px;
+            /* 初始透明，加载完成后渐显 */
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            /* 禁止图片缩放模糊 */
+            image-rendering: -webkit-optimize-contrast;
+        }
+
+        /* 图片加载完成后显示 */
+        .image-thumbnail.loaded {
+            opacity: 1;
         }
 
         .resource-link {
@@ -261,7 +289,7 @@
     </div>
 
     <script>
-        // ========== 这里改成你的 GitHub 信息 ==========
+        // ========== 改成你的 GitHub 信息 ==========
         const USER_NAME = "LittleYouran";
         const REPO_NAME = "LittleYouran.github.io";
         const BASE_PATH = "docs/files";
@@ -269,24 +297,46 @@
 
         let currentType = "";
         let allImages = [];
+        // 缓存背景图，避免重复请求
+        let bgCache = { landscape: [], portrait: [] };
 
-        // 检测设备+随机背景
+        // 检测设备+设置背景（无覆盖，一次加载完成）
         function detectDevice() {
             const isMobile = window.innerWidth <= 600;
-            document.getElementById("device-type").textContent = isMobile ? "手机" : "电脑/平板";
-            // 加载对应分类的图片做背景
+            const deviceText = isMobile ? "手机" : "电脑/平板";
             const folder = isMobile ? `${BASE_PATH}/竖屏` : `${BASE_PATH}/横屏`;
+            const cacheKey = isMobile ? "portrait" : "landscape";
+            
+            document.getElementById("device-type").textContent = deviceText;
+
+            // 优先用缓存，无缓存则请求一次
+            if(bgCache[cacheKey].length > 0) {
+                const randomImg = bgCache[cacheKey][Math.floor(Math.random() * bgCache[cacheKey].length)];
+                document.body.style.backgroundImage = `url(${randomImg.download_url})`;
+                return;
+            }
+
+            // 只请求一次，缓存结果
             fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${folder}`)
-            .then(res => res.json())
+            .then(res => {
+                if(!res.ok) throw new Error("背景加载失败");
+                return res.json();
+            })
             .then(data => {
-                if(data.message) throw new Error("获取背景失败");
                 const images = data.filter(f => ["jpg","png","jpeg","gif"].includes(f.name.split(".").pop().toLowerCase()));
+                bgCache[cacheKey] = images;
                 const randomImg = images[Math.floor(Math.random() * images.length)];
                 document.body.style.backgroundImage = `url(${randomImg.download_url})`;
-            }).catch(err => console.log(err));
+            })
+            .catch(err => {
+                console.log(err);
+                // 加载失败用纯色兜底，不闪烁
+                document.body.style.backgroundImage = "none";
+                document.body.style.backgroundColor = "#1a1a1a";
+            });
         }
 
-        // 打开壁纸列表
+        // 打开壁纸列表（无覆盖，直接渲染自有图库）
         function openList(type) {
             currentType = type;
             const folder = type === "landscape" ? `${BASE_PATH}/横屏` : `${BASE_PATH}/竖屏`;
@@ -295,19 +345,20 @@
             document.getElementById("list-page").style.display = "block";
             document.getElementById("image-list-container").innerHTML = "<li class='empty-tip'>加载中...</li>";
 
-            // 读取仓库里的图片
             fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${folder}`)
             .then(res => {
-                if(!res.ok) throw new Error("API请求失败");
+                if(!res.ok) throw new Error("壁纸加载失败");
                 return res.json();
             })
             .then(data => {
-                // 过滤出图片文件
+                // 过滤图片+缓存
                 allImages = data.filter(f => ["jpg","png","jpeg","gif"].includes(f.name.split(".").pop().toLowerCase()));
+                if(type === "landscape") bgCache.landscape = allImages;
+                else bgCache.portrait = allImages;
                 renderList(allImages);
             })
             .catch(err => {
-                document.getElementById("image-list-container").innerHTML = `<li class='error-tip'>加载失败: ${err.message}</li>`;
+                document.getElementById("image-list-container").innerHTML = `<li class='error-tip'>${err.message}</li>`;
             });
         }
 
@@ -318,30 +369,35 @@
             document.getElementById("list-search").value = "";
         }
 
-        // 渲染列表
+        // 渲染列表+高清加载动画
         function renderList(list) {
             const container = document.getElementById("image-list-container");
             if(list.length === 0) {
                 container.innerHTML = "<li class='empty-tip'>暂无壁纸</li>";
                 return;
             }
+
             container.innerHTML = list.map(img => `
                 <li class="image-item">
-                    <img src="${img.download_url}" alt="${img.name}" class="image-thumbnail">
+                    <img 
+                        src="${img.download_url}" 
+                        alt="${img.name}" 
+                        class="image-thumbnail"
+                        onload="this.classList.add('loaded')"
+                    >
                     <a href="${img.download_url}" target="_blank" class="resource-link">${img.name}</a>
                 </li>
             `).join("");
         }
 
-        // ========== 彻底修复搜索功能 ==========
+        // 搜索功能+恢复回车确认
         function doSearch() {
-            const keyword = document.getElementById("list-search").value.trim();
+            const keyword = document.getElementById("list-search").value.trim().toLowerCase();
             if(!keyword) {
                 renderList(allImages);
                 return;
             }
-            // 直接匹配完整文件名（含后缀），比如搜"风景1.jpg"就能找到
-            const filtered = allImages.filter(img => img.name.toLowerCase().includes(keyword.toLowerCase()));
+            const filtered = allImages.filter(img => img.name.toLowerCase().includes(keyword));
             renderList(filtered);
         }
 
@@ -353,6 +409,12 @@
             renderList(sorted);
         }
 
+        // ========== 恢复回车搜索 ==========
+        document.getElementById("list-search").addEventListener("keydown", function(e) {
+            if(e.key === "Enter") doSearch();
+        });
+
+        // 页面加载执行
         window.onload = detectDevice;
     </script>
 </body>
