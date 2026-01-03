@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="dark-mode">
+<html lang="zh-CN">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -11,7 +11,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            transition: all 0.2s ease; /* 流畅过渡动画 */
+            transition: all 0.2s ease;
         }
 
         /* 固定深色模式变量 */
@@ -109,105 +109,104 @@
             border: 1px solid var(--border-color);
         }
 
-        /* 资源下载区域 */
+        /* 资源导航区域 */
         .resource-wrap {
             margin-top: 20px;
             padding: 16px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
+            text-align: center;
         }
 
         .resource-wrap h3 {
             color: var(--text-highlight);
-            margin-bottom: 10px;
+            margin-bottom: 20px;
         }
 
         .device-info {
             color: var(--text-highlight);
-            margin-bottom: 15px;
+            margin-bottom: 25px;
             font-size: 14px;
         }
 
-        /* 折叠按钮样式 */
-        .folder-toggle {
-            padding: 8px 16px;
+        /* 跳转链接按钮 */
+        .link-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            margin: 0 10px 15px;
             background: var(--bg-highlight);
             border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 8px;
             color: var(--text-highlight);
-            cursor: pointer;
-            margin: 10px 0;
-            width: 100%;
-            text-align: left;
+            text-decoration: none;
             font-size: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
-        .folder-toggle:hover {
+        .link-btn:hover {
+            background: var(--btn-hover);
+            transform: translateY(-2px);
+        }
+
+        /* 图片列表页面样式 */
+        .list-page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .back-home {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--text-highlight);
+            text-decoration: none;
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 4px;
+        }
+
+        .back-home:hover {
             background: var(--btn-hover);
         }
 
-        .toggle-icon {
-            transition: transform 0.3s ease;
-        }
-
-        .toggle-icon.rotate {
-            transform: rotate(90deg);
-        }
-
-        /* 折叠容器 */
-        .folder-content {
-            display: none;
-            margin: 10px 0 20px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .folder-content.show {
-            display: block;
-        }
-
-        /* 图片列表样式 */
         .image-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
             list-style: none;
             padding-left: 0;
         }
 
         .image-item {
             border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 10px;
+            border-radius: 8px;
+            padding: 12px;
             text-align: center;
             background: var(--bg-highlight);
         }
 
         .image-thumbnail {
             width: 100%;
-            height: 100px;
+            height: 120px;
             object-fit: cover;
-            border-radius: 4px;
-            margin-bottom: 8px;
+            border-radius: 6px;
+            margin-bottom: 10px;
         }
 
         .resource-link{
             color: var(--text-highlight);
             text-decoration: none;
             font-weight: 500;
-            font-size: 14px;
         }
 
         .resource-link:hover{
             color: #ffd700;
             text-decoration: underline;
+        }
+
+        .empty-tip {
+            color: var(--text-highlight);
+            text-align: center;
+            padding: 50px 0;
         }
 
         /* 页脚 */
@@ -237,7 +236,11 @@
                 width: 100%;
             }
             .image-list {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+            .link-btn {
+                display: block;
+                margin: 0 auto 15px;
             }
         }
 
@@ -245,55 +248,51 @@
             #header, #content, #footer{
                 max-width: 90%;
             }
+            .image-list {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            }
         }
     </style>
 </head>
 <body>
-    <div id="header">
-        <div class="header-left">
-            <img src="https://avatars.githubusercontent.com/u/179694017?v=4" class="avatar" alt="头像">
-            <h1>LittleYouran呀</h1>
-        </div>
-        <div class="header-right">
-            <!-- 搜索框 -->
-            <div class="search-box">
-                <input type="text" id="search-input" placeholder="输入关键词搜索...">
-                <button id="search-btn">搜索</button>
+    <!-- 主页内容 -->
+    <div id="home-page">
+        <div id="header">
+            <div class="header-left">
+                <img src="https://avatars.githubusercontent.com/u/179694017?v=4" class="avatar" alt="头像">
+                <h1>LittleYouran呀</h1>
+            </div>
+            <div class="header-right">
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="输入关键词搜索...">
+                    <button id="search-btn">搜索</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div id="content">
-        <p style="color: var(--text-highlight);">一只猫猫呀喵喵喵</p>
-        <!-- 资源导航区域 -->
-        <div class="resource-wrap">
-            <h3>📥 壁纸资源</h3>
-            <div class="device-info">
-                当前设备：<span id="device-type">检测中...</span> | 背景壁纸：随机切换（刷新即可换）
+        <div id="content">
+            <p style="color: var(--text-highlight);">一只猫猫呀喵喵喵</p>
+            <div class="resource-wrap">
+                <h3>📥 壁纸资源</h3>
+                <div class="device-info">
+                    当前设备：<span id="device-type">检测中...</span> | 背景壁纸：随机切换（刷新即可换）
+                </div>
+                <!-- 跳转链接 -->
+                <a href="javascript:void(0);" class="link-btn" id="landscape-link">🖥️ 横屏壁纸（电脑/平板）</a>
+                <a href="javascript:void(0);" class="link-btn" id="portrait-link">📱 竖屏壁纸（手机）</a>
             </div>
-            
-            <!-- 横屏壁纸折叠按钮 + 容器 -->
-            <button class="folder-toggle" id="landscape-toggle">
-                🖥️ 横屏壁纸（电脑/平板）
-                <span class="toggle-icon">▶</span>
-            </button>
-            <div class="folder-content" id="landscape-container">
-                <ul class="image-list" id="landscape-list"></ul>
-            </div>
+        </div>
 
-            <!-- 竖屏壁纸折叠按钮 + 容器 -->
-            <button class="folder-toggle" id="portrait-toggle">
-                📱 竖屏壁纸（手机）
-                <span class="toggle-icon">▶</span>
-            </button>
-            <div class="folder-content" id="portrait-container">
-                <ul class="image-list" id="portrait-list"></ul>
-            </div>
+        <div id="footer">
+            Copyright © 2026 LittleYouran呀 | Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a>
         </div>
     </div>
 
-    <div id="footer">
-        Copyright © 2026 LittleYouran呀 | Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a>
+    <!-- 壁纸列表页面（默认隐藏） -->
+    <div id="list-page" class="list-page" style="display: none;">
+        <a href="javascript:void(0);" class="back-home" id="back-btn">← 返回首页</a>
+        <h2 id="list-title" style="color: var(--text-highlight); margin-bottom: 20px;"></h2>
+        <ul class="image-list" id="image-list-container"></ul>
     </div>
 
     <script>
@@ -304,69 +303,67 @@
         const LANDSCAPE_FOLDER = `${BASE_FOLDER}/横屏`;
         const PORTRAIT_FOLDER = `${BASE_FOLDER}/竖屏`;
 
-        // 存储壁纸数据（全局变量，提升流畅度）
-        let landscapeImages = [];
-        let portraitImages = [];
-        let activeSearchFolder = ''; // 记录当前搜索的文件夹
+        // 全局变量
+        let currentFolder = '';
+        let allImages = [];
 
-        // 检测设备屏幕类型
+        // DOM元素
+        const homePage = document.getElementById('home-page');
+        const listPage = document.getElementById('list-page');
+        const landscapeLink = document.getElementById('landscape-link');
+        const portraitLink = document.getElementById('portrait-link');
+        const backBtn = document.getElementById('back-btn');
+        const listTitle = document.getElementById('list-title');
+        const imageListContainer = document.getElementById('image-list-container');
+        const deviceTypeEl = document.getElementById('device-type');
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
+
+        // 检测设备类型
         function detectDeviceType() {
             const isMobile = window.innerWidth <= 600;
             const deviceType = isMobile ? '手机（竖屏）' : '电脑/平板（横屏）';
-            document.getElementById('device-type').textContent = deviceType;
+            deviceTypeEl.textContent = deviceType;
             return isMobile;
         }
 
-        // 从GitHub API获取指定文件夹的图片（缓存数据提升流畅度）
-        async function getFolderImages(folderPath) {
+        // 从GitHub API获取图片
+        async function getImages(folderPath) {
             try {
                 const response = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/${folderPath}`);
-                if (!response.ok) throw new Error(`获取${folderPath}文件夹失败`);
-                
+                if (!response.ok) throw new Error('获取壁纸失败');
                 const files = await response.json();
                 const imageExts = ['jpg', 'png', 'jpeg', 'gif', 'webp'];
-                const images = files.filter(file => {
+                return files.filter(file => {
                     const ext = file.name.split('.').pop().toLowerCase();
                     return imageExts.includes(ext);
                 });
-                return images;
             } catch (error) {
                 console.error(error);
                 return [];
             }
         }
 
-        // 随机设置背景图
+        // 随机设置首页背景
         async function setRandomBackground() {
             const isMobile = detectDeviceType();
             const targetFolder = isMobile ? PORTRAIT_FOLDER : LANDSCAPE_FOLDER;
-            const images = isMobile ? portraitImages : landscapeImages;
-            
+            const images = await getImages(targetFolder);
             if (images.length === 0) {
-                // 若缓存无数据，临时获取
-                const tempImages = await getFolderImages(targetFolder);
-                if (tempImages.length === 0) {
-                    document.body.style.backgroundImage = 'url(https://picsum.photos/1920/1080)';
-                    return;
-                }
-                const randomImg = tempImages[Math.floor(Math.random() * tempImages.length)];
-                document.body.style.backgroundImage = `url(${randomImg.download_url})`;
+                document.body.style.backgroundImage = 'url(https://picsum.photos/1920/1080)';
                 return;
             }
-
             const randomImg = images[Math.floor(Math.random() * images.length)];
             document.body.style.backgroundImage = `url(${randomImg.download_url})`;
         }
 
-        // 渲染图片列表
-        function renderImageList(images, listId) {
-            const listEl = document.getElementById(listId);
+        // 渲染壁纸列表
+        function renderImageList(images) {
             if (images.length === 0) {
-                listEl.innerHTML = `<li style="color: var(--text-highlight);">暂无壁纸</li>`;
+                imageListContainer.innerHTML = `<li class="empty-tip">暂无壁纸资源</li>`;
                 return;
             }
-
-            listEl.innerHTML = images.map(img => `
+            imageListContainer.innerHTML = images.map(img => `
                 <li class="image-item" data-name="${img.name}">
                     <img src="${img.download_url}" alt="${img.name}" class="image-thumbnail">
                     <a href="${img.download_url}" target="_blank" class="resource-link">${img.name}</a>
@@ -374,106 +371,67 @@
             `).join('');
         }
 
-        // 精准搜索：完全匹配关键词（不是包含）
+        // 切换到列表页面
+        async function goToListPage(folder, title) {
+            currentFolder = folder;
+            listTitle.textContent = title;
+            homePage.style.display = 'none';
+            listPage.style.display = 'block';
+            // 获取并渲染图片
+            allImages = await getImages(folder);
+            renderImageList(allImages);
+        }
+
+        // 返回首页
+        function goBackHome() {
+            listPage.style.display = 'none';
+            homePage.style.display = 'block';
+            searchInput.value = '';
+        }
+
+        // 精准搜索（完全匹配关键词）
         function preciseSearch(keyword) {
-            if (!activeSearchFolder) return; // 未展开文件夹时不搜索
-            
-            let targetImages = [];
-            let targetListId = '';
-
-            if (activeSearchFolder === 'landscape') {
-                targetImages = landscapeImages;
-                targetListId = 'landscape-list';
-                // 隐藏竖屏列表
-                document.getElementById('portrait-container').classList.remove('show');
-                document.getElementById('portrait-toggle').querySelector('.toggle-icon').classList.remove('rotate');
-            } else if (activeSearchFolder === 'portrait') {
-                targetImages = portraitImages;
-                targetListId = 'portrait-list';
-                // 隐藏横屏列表
-                document.getElementById('landscape-container').classList.remove('show');
-                document.getElementById('landscape-toggle').querySelector('.toggle-icon').classList.remove('rotate');
+            if (!currentFolder || allImages.length === 0) {
+                alert('请先进入壁纸分类页面再搜索');
+                return;
             }
-
-            // 精准匹配：文件名（不含后缀）或完整名称等于关键词
-            const matchedImages = targetImages.filter(img => {
+            const matchedImages = allImages.filter(img => {
                 const nameWithoutExt = img.name.split('.').slice(0, -1).join('.');
                 return nameWithoutExt === keyword || img.name === keyword;
             });
-
-            renderImageList(matchedImages, targetListId);
+            renderImageList(matchedImages);
         }
 
-        // 折叠/展开文件夹
-        function bindFolderToggle() {
-            // 横屏折叠按钮
-            const landscapeToggle = document.getElementById('landscape-toggle');
-            const landscapeContainer = document.getElementById('landscape-container');
-            landscapeToggle.addEventListener('click', async () => {
-                landscapeContainer.classList.toggle('show');
-                landscapeToggle.querySelector('.toggle-icon').classList.toggle('rotate');
-                activeSearchFolder = 'landscape'; // 设置当前搜索文件夹为横屏
-
-                // 首次展开时加载数据
-                if (landscapeContainer.classList.contains('show') && landscapeImages.length === 0) {
-                    landscapeImages = await getFolderImages(LANDSCAPE_FOLDER);
-                    renderImageList(landscapeImages, 'landscape-list');
-                }
+        // 绑定事件
+        function bindEvents() {
+            // 横屏壁纸链接
+            landscapeLink.addEventListener('click', () => {
+                goToListPage(LANDSCAPE_FOLDER, '横屏壁纸（电脑/平板）');
             });
-
-            // 竖屏折叠按钮
-            const portraitToggle = document.getElementById('portrait-toggle');
-            const portraitContainer = document.getElementById('portrait-container');
-            portraitToggle.addEventListener('click', async () => {
-                portraitContainer.classList.toggle('show');
-                portraitToggle.querySelector('.toggle-icon').classList.toggle('rotate');
-                activeSearchFolder = 'portrait'; // 设置当前搜索文件夹为竖屏
-
-                // 首次展开时加载数据
-                if (portraitContainer.classList.contains('show') && portraitImages.length === 0) {
-                    portraitImages = await getFolderImages(PORTRAIT_FOLDER);
-                    renderImageList(portraitImages, 'portrait-list');
-                }
+            // 竖屏壁纸链接
+            portraitLink.addEventListener('click', () => {
+                goToListPage(PORTRAIT_FOLDER, '竖屏壁纸（手机）');
             });
-        }
-
-        // 搜索功能绑定
-        function bindSearch() {
-            const searchBtn = document.getElementById('search-btn');
-            const searchInput = document.getElementById('search-input');
-
+            // 返回首页
+            backBtn.addEventListener('click', goBackHome);
+            // 搜索按钮
             searchBtn.addEventListener('click', () => {
                 const keyword = searchInput.value.trim();
                 if (!keyword) {
-                    // 清空关键词时重新渲染对应文件夹的全部图片
-                    if (activeSearchFolder === 'landscape') {
-                        renderImageList(landscapeImages, 'landscape-list');
-                    } else if (activeSearchFolder === 'portrait') {
-                        renderImageList(portraitImages, 'portrait-list');
-                    } else {
-                        alert('请先展开横屏/竖屏壁纸再搜索');
-                    }
+                    renderImageList(allImages);
                     return;
                 }
                 preciseSearch(keyword);
             });
-
+            // 回车搜索
             searchInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') searchBtn.click();
             });
         }
 
-        // 页面加载完成后执行（预加载数据提升流畅度）
+        // 页面初始化
         window.onload = async () => {
-            bindFolderToggle();
-            bindSearch();
-            // 预加载背景图所需的壁纸数据
-            const isMobile = detectDeviceType();
-            if (isMobile) {
-                portraitImages = await getFolderImages(PORTRAIT_FOLDER);
-            } else {
-                landscapeImages = await getFolderImages(LANDSCAPE_FOLDER);
-            }
+            bindEvents();
             await setRandomBackground();
         };
     </script>
