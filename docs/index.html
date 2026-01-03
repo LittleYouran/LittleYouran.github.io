@@ -198,6 +198,14 @@
             margin-left: 5px;
         }
 
+        /* 版权提示样式：字号缩小 */
+        .copyright-tip {
+            font-size: 10px;
+            color: #ccc;
+            margin-top: 15px;
+            line-height: 1.4;
+        }
+
         #footer{
             text-align: center;
             margin: 0 auto;
@@ -426,6 +434,7 @@
         <div id="content">
             <p>一只猫猫呀喵喵喵</p>
 
+            <!-- 壁纸资源模块 -->
             <div class="resource-module">
                 <h3>📥 壁纸资源</h3>
                 <div class="device-info" id="device-type">当前设备：检测中...</div>
@@ -433,8 +442,11 @@
                     <div class="link-btn" onclick="openWallpaperList('landscape')">🖥️ 横屏壁纸</div>
                     <div class="link-btn" onclick="openWallpaperList('portrait')">📱 竖屏壁纸</div>
                 </div>
+                <!-- 壁纸版权提示 -->
+                <p class="copyright-tip">所有图片均来自 P 站 B 站 等一些视频 软件或网站 侵权请务必联系 待查看后必定删除<br>联系邮箱 3218633407@qq.com</p>
             </div>
 
+            <!-- 资源合集模块 -->
             <div class="resource-module">
                 <h3>📦 资源合集</h3>
                 <div class="folder-btn-group">
@@ -445,6 +457,8 @@
                     <div class="folder-btn" onclick="openFolderPage('调整震动')">调整震动</div>
                     <div class="folder-btn" onclick="openFolderPage('音效模块')">音效模块</div>
                 </div>
+                <!-- 资源版权提示 -->
+                <p class="copyright-tip">所有资源均来自酷安群 和 友分享 侵权联系 看到必删 邮箱 3218633407@qq.com</p>
             </div>
         </div>
 
@@ -564,7 +578,6 @@
 
             let html = "";
             data.forEach(img => {
-                // 核心修复：给下载按钮绑定独立的下载函数，彻底阻止事件冒泡
                 html += `
                     <li class="image-card">
                         <img src="${img.download_url}" alt="${img.name}" class="image-preview" onclick="openPreview('${img.download_url}')">
@@ -651,13 +664,12 @@
             document.body.style.overflow = "auto";
         }
 
-        // 核心修复：壁纸下载独立函数，避免和预览事件冲突
+        // 壁纸下载独立函数
         function handleWallpaperDownload(url, fileName) {
-            // 强制触发下载，而非跳转
             const a = document.createElement('a');
             a.href = url;
             a.download = fileName || '壁纸.jpg';
-            a.target = '_blank'; // 可选：打开新标签下载，避免阻塞
+            a.target = '_blank';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
