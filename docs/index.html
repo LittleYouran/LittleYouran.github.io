@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>LittleYouran的博客</title>
+    <title>LittleYouran呀</title>
     <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
     <style>
         * {
@@ -12,12 +12,10 @@
             padding: 0;
             box-sizing: border-box;
             transition: none;
-            /* 核心：禁用所有元素的选中高亮 */
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
-            /* 禁用手机端点击蓝色边框 */
             -webkit-tap-highlight-color: transparent;
             tap-highlight-color: transparent;
             outline: none;
@@ -90,7 +88,6 @@
             color: var(--text-highlight);
             outline: none;
             flex: 1;
-            /* 搜索框允许输入选中 */
             -webkit-user-select: text;
             -moz-user-select: text;
             -ms-user-select: text;
@@ -122,24 +119,24 @@
             transform: translateZ(0);
         }
 
-        .resource-wrap {
+        /* 资源模块通用样式 */
+        .resource-module {
             margin-top: 15px;
             padding: 12px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
             text-align: center;
         }
-
-        .resource-wrap h3 {
+        .resource-module h3 {
             font-size: 16px;
             margin-bottom: 15px;
         }
-
         .device-info {
             font-size: 14px;
             margin-bottom: 20px;
         }
 
+        /* 壁纸资源按钮 */
         .link-btn {
             display: block;
             padding: 10px 20px;
@@ -153,11 +150,29 @@
             max-width: 200px;
             transform: translateZ(0);
         }
-
         .link-btn:hover {
             transform: translateY(-2px);
             background: var(--btn-hover);
             transition: all 0.2s ease;
+        }
+
+        /* ZIP资源按钮 */
+        .zip-btn {
+            display: block;
+            padding: 10px 20px;
+            margin: 10px auto;
+            background: linear-gradient(135deg, rgba(50,50,50,0.3), rgba(30,30,30,0.3));
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: #eee;
+            text-decoration: none;
+            font-size: 14px;
+            max-width: 200px;
+            transform: translateZ(0);
+        }
+        .zip-btn:hover {
+            background: linear-gradient(135deg, rgba(60,60,60,0.4), rgba(40,40,40,0.4));
+            border-color: #666;
         }
 
         .list-page {
@@ -315,7 +330,6 @@
             cursor: pointer;
         }
 
-        /* 电脑端适配 */
         @media (min-width: 600px) {
             .search-box {
                 width: auto;
@@ -349,13 +363,23 @@
 
         <div id="content">
             <p>一只猫猫呀喵喵喵</p>
-            <div class="resource-wrap">
+
+            <!-- 壁纸资源模块（原有边框） -->
+            <div class="resource-module">
                 <h3>📥 壁纸资源</h3>
                 <div class="device-info">
                     当前设备：<span id="device-type">检测中...</span> | 刷新页面切换背景
                 </div>
                 <a href="javascript:void(0)" class="link-btn" onclick="openList('landscape')">🖥️ 横屏壁纸</a>
                 <a href="javascript:void(0)" class="link-btn" onclick="openList('portrait')">📱 竖屏壁纸</a>
+            </div>
+
+            <!-- ZIP 资源模块（新增独立边框） -->
+            <div class="resource-module">
+                <h3>📦 ZIP 打包资源</h3>
+                <!-- 预留入口，后续添加具体 ZIP 下载链接 -->
+                <a href="javascript:void(0)" class="zip-btn" onclick="alert('后续添加 ZIP 下载链接')">壁纸合集 - 风景篇.zip</a>
+                <a href="javascript:void(0)" class="zip-btn" onclick="alert('后续添加 ZIP 下载链接')">壁纸合集 - 动漫篇.zip</a>
             </div>
         </div>
 
@@ -394,7 +418,6 @@
         const USER_NAME = "LittleYouran";
         const REPO_NAME = "LittleYouran.github.io";
         const BASE_PATH = "docs/files";
-        // 备用背景图（解决移动端GitHub背景加载失败）
         const BACKUP_BG = "https://picsum.photos/1080/1920";
         // =============================================
 
@@ -402,7 +425,6 @@
         let allImages = [];
         let bgCache = { landscape: [], portrait: [] };
 
-        // 修复移动端设备检测+背景加载
         function detectDevice() {
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             const deviceText = isMobile ? "手机" : "电脑/平板";
@@ -411,7 +433,6 @@
 
             document.getElementById("device-type").textContent = deviceText;
 
-            // 移动端优化：优先加载自有壁纸，失败再用备用图
             if(isMobile) {
                 loadImages(folder, cacheKey).then(images => {
                     if(images.length > 0) {
@@ -426,7 +447,6 @@
                 return;
             }
 
-            // 电脑端逻辑不变
             if(bgCache[cacheKey].length > 0) {
                 const randomImg = bgCache[cacheKey][Math.floor(Math.random() * bgCache[cacheKey].length)];
                 document.body.style.backgroundImage = `url(${randomImg.download_url})`;
@@ -441,11 +461,9 @@
             });
         }
 
-        // 封装图片加载函数（兼容移动端+超时处理）
         async function loadImages(folder, cacheKey) {
             if(bgCache[cacheKey].length > 0) return bgCache[cacheKey];
             try {
-                // 超时控制：5秒内没加载完就抛错
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
                 const response = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${folder}`, {
@@ -463,7 +481,6 @@
             }
         }
 
-        // 打开列表（移动端强制加载，不依赖缓存）
         async function openList(type) {
             currentType = type;
             const folder = type === "landscape" ? `${BASE_PATH}/横屏` : `${BASE_PATH}/竖屏`;
@@ -541,17 +558,14 @@
             renderList(sorted);
         }
 
-        // 回车搜索
         document.getElementById("list-search").addEventListener("keydown", function(e) {
             if(e.key === "Enter") doSearch();
         });
 
-        // ESC关闭预览
         document.addEventListener("keydown", function(e) {
             if(e.key === "Escape") closePreview();
         });
 
-        // 页面加载执行
         window.onload = detectDevice;
     </script>
 </body>
