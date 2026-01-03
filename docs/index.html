@@ -406,12 +406,12 @@
             <div class="resource-module">
                 <h3>📦 资源合集</h3>
                 <div class="zip-btn-group">
-                    <div class="zip-btn" onclick="downloadZip('个人二改调度.zip', '个人二改调度.zip')">个人二改调度 <span class="tag">(含cts+yc)</span></div>
-                    <div class="zip-btn" onclick="downloadZip('一加 资源.zip', '一加 资源.zip')">一加 资源</div>
-                    <div class="zip-btn" onclick="downloadZip('小米 资源.zip', '小米 资源.zip')">小米 资源</div>
-                    <div class="zip-btn" onclick="downloadZip('调度 资源.zip', '调度 资源.zip')">调度 资源</div>
-                    <div class="zip-btn" onclick="downloadZip('调整震动.zip', '调整震动.zip')">调整震动</div>
-                    <div class="zip-btn" onclick="downloadZip('音效模块.zip', '音效模块.zip')">音效模块</div>
+                    <div class="zip-btn" onclick="downloadFolder('个人二改调度')">个人二改调度 <span class="tag">(含cts+yc)</span></div>
+                    <div class="zip-btn" onclick="downloadFolder('一加 资源')">一加 资源</div>
+                    <div class="zip-btn" onclick="downloadFolder('小米 资源')">小米 资源</div>
+                    <div class="zip-btn" onclick="downloadFolder('调度 资源')">调度 资源</div>
+                    <div class="zip-btn" onclick="downloadFolder('调整震动')">调整震动</div>
+                    <div class="zip-btn" onclick="downloadFolder('音效模块')">音效模块</div>
                 </div>
             </div>
         </div>
@@ -458,20 +458,46 @@
         let allImages = [];
         let bgCache = { landscape: [], portrait: [] };
 
-        // ZIP 直接下载函数（不跳转仓库）
-        function downloadZip(zipFileName, downloadName) {
-            // 拼接 GitHub Raw 直接下载链接
-            const rawUrl = `https://raw.githubusercontent.com/${USER_NAME}/${REPO_NAME}/main/${BASE_PATH}/${zipFileName}`;
-            // 创建隐藏的 a 标签触发下载
-            const a = document.createElement('a');
-            a.href = rawUrl;
-            a.download = downloadName;
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            // 可选：下载提示
-            alert(`开始下载：${downloadName}`);
+        // 核心修复：文件夹下载（通过GitHub API获取文件后批量下载/打包）
+        async function downloadFolder(folderName) {
+            try {
+                // 1. 请求文件夹内的文件列表
+                const folderUrl = `https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${BASE_PATH}/${folderName}`;
+                const response = await fetch(folderUrl);
+                if (!response.ok) throw new Error("资源不存在");
+                
+                const files = await response.json();
+                if (files.length === 0) {
+                    alert(`【${folderName}】文件夹内无文件`);
+                    return;
+                }
+
+                // 2. 遍历文件并触发下载（针对单个文件）
+                alert(`开始下载【${folderName}】内的文件，共${files.length}个`);
+                files.forEach(file => {
+                    // 过滤文件夹，只下载文件
+                    if (!file.type || file.type === "file") {
+                        const a = document.createElement('a');
+                        a.href = file.download_url;
+                        a.download = file.name;
+                        a.style.display = 'none';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    }
+                });
+            } catch (err) {
+                // 容错：如果API请求失败，尝试直接下载ZIP文件
+                const zipUrl = `https://raw.githubusercontent.com/${USER_NAME}/${REPO_NAME}/main/${BASE_PATH}/${folderName}.zip`;
+                const a = document.createElement('a');
+                a.href = zipUrl;
+                a.download = `${folderName}.zip`;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                alert(`尝试下载打包文件：${folderName}.zip\n若仍失败请检查文件是否存在`);
+            }
         }
 
         function detectDevice() {
