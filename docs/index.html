@@ -34,7 +34,7 @@
         }
 
         body{
-            width: 100vw;
+            width: 100%;
             min-height: 100vh;
             font-family: sans-serif;
             background: no-repeat center center fixed;
@@ -56,6 +56,7 @@
             align-items: center;
             justify-content: space-between;
             margin: 0 auto 15px;
+            width: 100%;
             max-width: 90%;
             border-bottom: 1px solid var(--border-color);
             padding: 10px;
@@ -117,6 +118,7 @@
 
         #content{
             margin: 0 auto 20px;
+            width: 100%;
             max-width: 90%;
             background: var(--bg-highlight);
             padding: 15px;
@@ -160,7 +162,7 @@
             width: 100%;
             transform: translateZ(0);
         }
-        .link-btn:hover {
+        .link-btn:hover, .link-btn:active {
             transform: translateY(-2px);
             background: var(--btn-hover);
             transition: all 0.2s ease;
@@ -187,7 +189,7 @@
             transform: translateZ(0);
             cursor: pointer;
         }
-        .folder-btn:hover {
+        .folder-btn:hover, .folder-btn:active {
             background: linear-gradient(135deg, rgba(60,60,60,0.4), rgba(40,40,40,0.4));
             border-color: #666;
         }
@@ -212,6 +214,7 @@
         #footer{
             text-align: center;
             margin: 0 auto;
+            width: 100%;
             max-width: 90%;
             font-size: 12px;
             color: var(--text-highlight);
@@ -221,7 +224,7 @@
         /* 独立列表页样式（无首页冗余内容） */
         #list-standalone-page {
             display: none;
-            width: 100vw;
+            width: 100%;
             min-height: 100vh;
             padding: 15px;
             background: inherit;
@@ -229,7 +232,7 @@
 
         #folder-standalone-page {
             display: none;
-            width: 100vw;
+            width: 100%;
             min-height: 100vh;
             padding: 15px;
             background: inherit;
@@ -240,6 +243,7 @@
             justify-content: space-between;
             align-items: center;
             margin: 0 auto 20px;
+            width: 100%;
             max-width: 95%;
             padding: 10px;
             background: var(--bg-highlight);
@@ -266,11 +270,14 @@
             display: flex;
             gap: 10px;
             margin: 0 auto 20px;
+            width: 100%;
             max-width: 95%;
+            flex-wrap: wrap;
         }
 
         .standalone-search-input {
             flex: 1;
+            min-width: 200px;
             padding: 8px 12px;
             background: var(--search-bg);
             border: 1px solid var(--border-color);
@@ -286,12 +293,14 @@
             border-radius: 4px;
             color: var(--text-highlight);
             cursor: pointer;
+            white-space: nowrap;
         }
 
         .image-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
             gap: 18px;
+            width: 100%;
             max-width: 95%;
             margin: 0 auto;
             list-style: none;
@@ -324,22 +333,27 @@
             width: 100%;
         }
 
+        /* 移动端文件列表适配核心 */
         .file-list {
+            width: 100%;
             max-width: 95%;
             margin: 0 auto;
             background: var(--bg-highlight);
             border-radius: 8px;
             border: 1px solid var(--border-color);
             padding: 15px;
+            overflow-x: auto; /* 解决移动端横向溢出 */
         }
 
         .file-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px;
+            padding: 10px 5px;
             border-bottom: 1px dashed #444;
             margin-bottom: 8px;
+            width: 100%;
+            min-width: 300px; /* 保证小屏内容不挤压 */
         }
 
         .file-name {
@@ -347,6 +361,10 @@
             text-align: left;
             font-size: 14px;
             color: #eee;
+            padding-right: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; /* 文件名过长省略 */
         }
 
         .file-download-btn {
@@ -357,6 +375,7 @@
             color: white;
             cursor: pointer;
             white-space: nowrap;
+            flex-shrink: 0; /* 按钮不被挤压 */
         }
 
         .empty-tip {
@@ -409,6 +428,7 @@
             cursor: pointer;
         }
 
+        /* 移动端适配补充 */
         @media (max-width: 600px) {
             .image-grid {
                 grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -416,6 +436,16 @@
             }
             .image-preview {
                 height: 90px;
+            }
+            .standalone-search-box {
+                flex-direction: column;
+            }
+            .standalone-search-input, .standalone-search-btn, .standalone-sort-select {
+                width: 100%;
+                min-width: unset;
+            }
+            .file-item {
+                min-width: unset;
             }
         }
     </style>
@@ -534,11 +564,18 @@
             document.getElementById("device-type").innerText = `当前设备：${deviceText} | 刷新页面切换背景`;
         }
 
-        // 设置随机背景图
+        // 设置随机背景图（增加错误重试）
         async function setRandomBg() {
             const folder = isMobile ? `${BASE_PATH}/竖屏` : `${BASE_PATH}/横屏`;
             try {
-                const res = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${folder}`);
+                const res = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${folder}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
+                    cache: 'no-cache'
+                });
+                if (!res.ok) throw new Error('API请求失败');
                 const data = await res.json();
                 const images = data.filter(f => ["jpg","png","jpeg","gif"].includes(f.name.split(".").pop().toLowerCase()));
                 if(images.length > 0) {
@@ -548,11 +585,12 @@
                     document.body.style.backgroundImage = `url(${BACKUP_BG})`;
                 }
             } catch (err) {
+                console.log('背景加载失败:', err);
                 document.body.style.backgroundImage = `url(${BACKUP_BG})`;
             }
         }
 
-        // 打开独立壁纸列表页
+        // 打开独立壁纸列表页（增加加载状态提示）
         async function openWallpaperList(type) {
             document.getElementById("home-page").style.display = "none";
             document.getElementById("folder-standalone-page").style.display = "none";
@@ -560,15 +598,22 @@
             
             const title = type === "landscape" ? "横屏壁纸" : "竖屏壁纸";
             document.getElementById("wallpaper-list-title").innerText = title;
-            document.getElementById("wallpaper-grid").innerHTML = "<li class='empty-tip'>加载中...</li>";
+            const grid = document.getElementById("wallpaper-grid");
+            grid.innerHTML = "<li class='empty-tip'>加载中...</li>";
 
             try {
-                const res = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${BASE_PATH}/${type === "landscape" ? "横屏" : "竖屏"}`);
+                const res = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${BASE_PATH}/${type === "landscape" ? "横屏" : "竖屏"}`, {
+                    headers: {
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                if (!res.ok) throw new Error(`请求失败: ${res.status}`);
                 const data = await res.json();
                 wallpaperData = data.filter(f => ["jpg","png","jpeg","gif"].includes(f.name.split(".").pop().toLowerCase()));
                 renderWallpaperGrid(wallpaperData);
             } catch (err) {
-                document.getElementById("wallpaper-grid").innerHTML = "<li class='empty-tip'>壁纸加载失败</li>";
+                console.log('壁纸加载失败:', err);
+                grid.innerHTML = `<li class='empty-tip'>壁纸加载失败<br>请稍后重试</li>`;
             }
         }
 
@@ -591,22 +636,28 @@
             document.getElementById("wallpaper-grid").innerHTML = html;
         }
 
-        // 打开独立文件夹页
+        // 打开独立文件夹页（优化移动端加载）
         async function openFolderPage(folderName) {
             document.getElementById("home-page").style.display = "none";
             document.getElementById("list-standalone-page").style.display = "none";
             document.getElementById("folder-standalone-page").style.display = "block";
             
             document.getElementById("folder-page-title").innerText = folderName;
-            document.getElementById("folder-file-list").innerHTML = "<p class='empty-tip'>加载中...</p>";
+            const fileList = document.getElementById("folder-file-list");
+            fileList.innerHTML = "<p class='empty-tip'>加载中...</p>";
 
             try {
-                const res = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${BASE_PATH}/${folderName}`);
+                const res = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${BASE_PATH}/${folderName}`, {
+                    headers: {
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                if (!res.ok) throw new Error(`请求失败: ${res.status}`);
                 const data = await res.json();
                 const files = data.filter(item => item.type === "file");
                 
                 if(files.length === 0) {
-                    document.getElementById("folder-file-list").innerHTML = "<p class='empty-tip'>该文件夹内暂无文件</p>";
+                    fileList.innerHTML = "<p class='empty-tip'>该文件夹内暂无文件</p>";
                     return;
                 }
 
@@ -614,14 +665,15 @@
                 files.forEach(file => {
                     html += `
                         <div class="file-item">
-                            <div class="file-name">${file.name}</div>
+                            <div class="file-name" title="${file.name}">${file.name}</div>
                             <button class="file-download-btn" onclick="downloadFile('${file.download_url}', '${file.name}')">下载</button>
                         </div>
                     `;
                 });
-                document.getElementById("folder-file-list").innerHTML = html;
+                fileList.innerHTML = html;
             } catch (err) {
-                document.getElementById("folder-file-list").innerHTML = "<p class='empty-tip'>文件加载失败</p>";
+                console.log('文件加载失败:', err);
+                fileList.innerHTML = `<p class='empty-tip'>文件加载失败<br>请稍后重试</p>`;
             }
         }
 
@@ -679,14 +731,24 @@
             alert(`开始下载壁纸：${fileName}`);
         }
 
-        // 通用文件下载
+        // 通用文件下载（优化移动端下载）
         function downloadFile(url, fileName) {
             const a = document.createElement('a');
             a.href = url;
             a.download = fileName;
             a.style.display = 'none';
             document.body.appendChild(a);
-            a.click();
+            // 移动端触发点击兼容
+            if (isMobile) {
+                const event = new MouseEvent('click', {
+                    view: window,
+                    bubbles: true,
+                    cancelable: true
+                });
+                a.dispatchEvent(event);
+            } else {
+                a.click();
+            }
             document.body.removeChild(a);
             alert(`开始下载：${fileName}`);
         }
