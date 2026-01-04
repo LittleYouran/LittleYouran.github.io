@@ -32,8 +32,6 @@
             --mask-bg: rgba(0,0,0,0.85);
             --download-btn: #2188ff;
             --folder-color: #ff9900;
-            --first-card-border: 3px solid #00ffff; /* 第一张图高光边框颜色 */
-            --first-card-shadow: 0 0 15px #00ffff, 0 0 25px #00ffff; /* 高光发光效果 */
         }
 
         body{
@@ -348,11 +346,6 @@
             text-align: center;
             position: relative;
         }
-        /* 第一张图片高光边框样式 */
-        .image-card:first-child {
-            border: var(--first-card-border);
-            box-shadow: var(--first-card-shadow);
-        }
 
         .image-preview {
             width: 100%;
@@ -377,6 +370,17 @@
         .image-download-btn {
             padding: 6px 12px;
             background: var(--download-btn);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* 跳转按钮样式（替代第一张的下载） */
+        .image-jump-btn {
+            padding: 6px 12px;
+            background: #ff6600;
             border: none;
             border-radius: 4px;
             color: white;
@@ -611,6 +615,8 @@
         const BASE_PATH = "docs/files";
         const BACKUP_BG = "https://picsum.photos/1080/1920";
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        // 跳转目标地址（你可以改成自己需要的链接）
+        const JUMP_TARGET_URL = "https://aquapuf.xyz"; 
 
         // 全局变量
         let wallpaperData = [];
@@ -746,7 +752,7 @@
             }
         }
 
-        // 渲染壁纸网格（新增文件名显示 + 第一张高光）
+        // 渲染壁纸网格（第一张改为跳转按钮，去掉高光）
         function renderWallpaperGrid(data) {
             if(data.length === 0) {
                 document.getElementById("wallpaper-grid").innerHTML = "<li class='empty-tip'>暂无壁纸</li>";
@@ -755,15 +761,32 @@
 
             let html = "";
             data.forEach((img, index) => {
-                html += `
-                    <li class="image-card">
-                        <img src="${img.download_url}" alt="${img.name}" class="image-preview" onclick="openPreview('${img.download_url}')">
-                        <div class="image-name" title="${img.name}">${img.name}</div>
-                        <button class="image-download-btn" onclick="handleWallpaperDownload('${img.download_url}', '${img.name}')">下载</button>
-                    </li>
-                `;
+                if (index === 0) {
+                    // 第一张图片：跳转按钮
+                    html += `
+                        <li class="image-card">
+                            <img src="${img.download_url}" alt="${img.name}" class="image-preview" onclick="openPreview('${img.download_url}')">
+                            <div class="image-name" title="${img.name}">${img.name}</div>
+                            <button class="image-jump-btn" onclick="jumpToTarget()">跳转至目标页面</button>
+                        </li>
+                    `;
+                } else {
+                    // 其他图片：下载按钮
+                    html += `
+                        <li class="image-card">
+                            <img src="${img.download_url}" alt="${img.name}" class="image-preview" onclick="openPreview('${img.download_url}')">
+                            <div class="image-name" title="${img.name}">${img.name}</div>
+                            <button class="image-download-btn" onclick="handleWallpaperDownload('${img.download_url}', '${img.name}')">下载</button>
+                        </li>
+                    `;
+                }
             });
             document.getElementById("wallpaper-grid").innerHTML = html;
+        }
+
+        // 跳转至目标页面的函数
+        function jumpToTarget() {
+            window.open(JUMP_TARGET_URL, '_blank');
         }
 
         // 打开独立文件夹页
