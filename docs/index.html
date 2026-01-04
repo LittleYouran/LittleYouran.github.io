@@ -31,6 +31,7 @@
             --btn-hover: rgba(0,0,0,0.4);
             --mask-bg: rgba(0,0,0,0.85);
             --download-btn: #2188ff;
+            --folder-color: #ff9900;
         }
 
         body{
@@ -194,6 +195,28 @@
             border-color: #666;
         }
 
+        /* 角色分类文件夹样式 */
+        .character-folder-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .character-folder-btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, var(--folder-color), #e68a00);
+            border: 1px solid #ffcc00;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .character-folder-btn:hover {
+            background: linear-gradient(135deg, #ff8800, #cc7000);
+        }
+
         .tag {
             font-size: 12px;
             color: #ffd700;
@@ -230,6 +253,15 @@
             background: inherit;
         }
 
+        /* 角色分类页样式 */
+        #character-category-page {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+            padding: 15px;
+            background: inherit;
+        }
+
         #folder-standalone-page {
             display: none;
             width: 100%;
@@ -256,7 +288,7 @@
             color: var(--text-highlight);
         }
 
-        .back-home-btn {
+        .back-home-btn, .back-category-btn {
             padding: 6px 12px;
             background: var(--search-bg);
             border: 1px solid var(--border-color);
@@ -472,8 +504,8 @@
                 <h3>📥 壁纸资源</h3>
                 <div class="device-info" id="device-type">当前设备：检测中...</div>
                 <div class="wallpaper-btn-group">
-                    <div class="link-btn" onclick="openWallpaperList('landscape')">🖥️ 横屏壁纸</div>
-                    <div class="link-btn" onclick="openWallpaperList('portrait')">📱 竖屏壁纸</div>
+                    <div class="link-btn" onclick="openWallpaperCategory('landscape')">🖥️ 横屏壁纸</div>
+                    <div class="link-btn" onclick="openWallpaperCategory('portrait')">📱 竖屏壁纸</div>
                 </div>
                 <!-- 壁纸版权提示 -->
                 <p class="copyright-tip">所有图片均来自 P 站 B 站 等一些视频 软件或网站 侵权请务必联系 待查看后必定删除<br>联系邮箱 3218633407@qq.com</p>
@@ -500,11 +532,23 @@
         </div>
     </div>
 
-    <!-- 独立壁纸列表页（无首页冗余内容） -->
+    <!-- 角色分类页 -->
+    <div id="character-category-page">
+        <div class="standalone-header">
+            <h2 class="standalone-title" id="category-page-title">横屏壁纸 - 角色分类</h2>
+            <a href="javascript:void(0)" class="back-home-btn" onclick="backToHome()">← 返回首页</a>
+        </div>
+
+        <div class="character-folder-group" id="character-folder-container">
+            <p class="empty-tip">加载角色分类中...</p>
+        </div>
+    </div>
+
+    <!-- 独立壁纸列表页 -->
     <div id="list-standalone-page">
         <div class="standalone-header">
-            <h2 class="standalone-title" id="wallpaper-list-title">横屏壁纸</h2>
-            <a href="javascript:void(0)" class="back-home-btn" onclick="backToHome()">← 返回首页</a>
+            <h2 class="standalone-title" id="wallpaper-list-title">橘雪莉 - 横屏壁纸</h2>
+            <a href="javascript:void(0)" class="back-category-btn" onclick="backToCategory()">← 返回分类</a>
         </div>
 
         <div class="standalone-search-box">
@@ -521,7 +565,7 @@
         </ul>
     </div>
 
-    <!-- 独立文件夹详情页（无首页冗余内容） -->
+    <!-- 独立文件夹详情页 -->
     <div id="folder-standalone-page">
         <div class="standalone-header">
             <h2 class="standalone-title" id="folder-page-title">个人二改调度</h2>
@@ -551,6 +595,8 @@
 
         // 全局变量
         let wallpaperData = [];
+        let currentScreenType = ""; // 记录当前是横屏/竖屏
+        let currentCharacter = ""; // 记录当前角色
 
         // 页面初始化
         window.onload = function() {
@@ -564,22 +610,45 @@
             document.getElementById("device-type").innerText = `当前设备：${deviceText} | 刷新页面切换背景`;
         }
 
-        // 设置随机背景图（增加错误重试）
-        async function setRandomBg() {
-            const folder = isMobile ? `${BASE_PATH}/竖屏` : `${BASE_PATH}/横屏`;
+        // 核心修改：递归获取指定分类下所有壁纸，随机选一张
+        async function getAllWallpapersInCategory(baseFolder) {
+            let allImages = [];
             try {
-                const res = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${folder}`, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/vnd.github.v3+json'
-                    },
-                    cache: 'no-cache'
+                const res = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${baseFolder}`, {
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
                 });
-                if (!res.ok) throw new Error('API请求失败');
-                const data = await res.json();
-                const images = data.filter(f => ["jpg","png","jpeg","gif"].includes(f.name.split(".").pop().toLowerCase()));
-                if(images.length > 0) {
-                    const randomImg = images[Math.floor(Math.random() * images.length)];
+                if (!res.ok) throw new Error(`请求失败: ${res.status}`);
+                const items = await res.json();
+                
+                for (const item of items) {
+                    if (item.type === "dir") {
+                        // 递归获取子文件夹里的图片
+                        const subFolderImages = await getAllWallpapersInCategory(item.path);
+                        allImages = [...allImages, ...subFolderImages];
+                    } else if (item.type === "file") {
+                        // 筛选图片格式
+                        const ext = item.name.split(".").pop().toLowerCase();
+                        if (["jpg", "png", "jpeg", "gif"].includes(ext)) {
+                            allImages.push(item);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.log("获取壁纸失败:", err);
+            }
+            return allImages;
+        }
+
+        // 背景图随机逻辑：当前设备分类下（横/竖），全量随机
+        async function setRandomBg() {
+            // 确定当前设备对应的分类文件夹
+            const targetFolder = isMobile ? `${BASE_PATH}/竖屏` : `${BASE_PATH}/横屏`;
+            try {
+                // 获取该分类下所有图片（含子文件夹）
+                const allImages = await getAllWallpapersInCategory(targetFolder);
+                if (allImages.length > 0) {
+                    // 随机选一张
+                    const randomImg = allImages[Math.floor(Math.random() * allImages.length)];
                     document.body.style.backgroundImage = `url(${randomImg.download_url})`;
                 } else {
                     document.body.style.backgroundImage = `url(${BACKUP_BG})`;
@@ -590,22 +659,63 @@
             }
         }
 
-        // 打开独立壁纸列表页（增加加载状态提示）
-        async function openWallpaperList(type) {
-            document.getElementById("home-page").style.display = "none";
-            document.getElementById("folder-standalone-page").style.display = "none";
-            document.getElementById("list-standalone-page").style.display = "block";
+        // 打开壁纸分类页（横屏/竖屏）
+        async function openWallpaperCategory(screenType) {
+            currentScreenType = screenType;
+            const title = screenType === "landscape" ? "横屏壁纸 - 角色分类" : "竖屏壁纸 - 角色分类";
             
-            const title = type === "landscape" ? "横屏壁纸" : "竖屏壁纸";
-            document.getElementById("wallpaper-list-title").innerText = title;
-            const grid = document.getElementById("wallpaper-grid");
-            grid.innerHTML = "<li class='empty-tip'>加载中...</li>";
+            document.getElementById("home-page").style.display = "none";
+            document.getElementById("list-standalone-page").style.display = "none";
+            document.getElementById("folder-standalone-page").style.display = "none";
+            document.getElementById("character-category-page").style.display = "block";
+            
+            document.getElementById("category-page-title").innerText = title;
+            const container = document.getElementById("character-folder-container");
+            container.innerHTML = "<p class='empty-tip'>加载角色分类中...</p>";
 
             try {
-                const res = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${BASE_PATH}/${type === "landscape" ? "横屏" : "竖屏"}`, {
-                    headers: {
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
+                const folderPath = `${BASE_PATH}/${screenType === "landscape" ? "横屏" : "竖屏"}`;
+                const res = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${folderPath}`, {
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                });
+                if (!res.ok) throw new Error(`请求失败: ${res.status}`);
+                const data = await res.json();
+                // 筛选出文件夹（角色分类）
+                const characterFolders = data.filter(item => item.type === "dir");
+                
+                if (characterFolders.length === 0) {
+                    container.innerHTML = "<p class='empty-tip'>暂无角色分类文件夹</p>";
+                    return;
+                }
+
+                let html = "";
+                characterFolders.forEach(folder => {
+                    html += `<button class="character-folder-btn" onclick="openCharacterWallpaper('${folder.name}')">${folder.name}</button>`;
+                });
+                container.innerHTML = html;
+            } catch (err) {
+                console.log('角色分类加载失败:', err);
+                container.innerHTML = `<p class='empty-tip'>分类加载失败<br>请稍后重试</p>`;
+            }
+        }
+
+        // 打开角色壁纸列表
+        async function openCharacterWallpaper(characterName) {
+            currentCharacter = characterName;
+            const screenTitle = currentScreenType === "landscape" ? "横屏壁纸" : "竖屏壁纸";
+            const title = `${characterName} - ${screenTitle}`;
+            
+            document.getElementById("character-category-page").style.display = "none";
+            document.getElementById("list-standalone-page").style.display = "block";
+            
+            document.getElementById("wallpaper-list-title").innerText = title;
+            const grid = document.getElementById("wallpaper-grid");
+            grid.innerHTML = "<li class='empty-tip'>加载壁纸中...</li>";
+
+            try {
+                const folderPath = `${BASE_PATH}/${currentScreenType === "landscape" ? "横屏" : "竖屏"}/${characterName}`;
+                const res = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${folderPath}`, {
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
                 });
                 if (!res.ok) throw new Error(`请求失败: ${res.status}`);
                 const data = await res.json();
@@ -636,10 +746,11 @@
             document.getElementById("wallpaper-grid").innerHTML = html;
         }
 
-        // 打开独立文件夹页（优化移动端加载）
+        // 打开独立文件夹页
         async function openFolderPage(folderName) {
             document.getElementById("home-page").style.display = "none";
             document.getElementById("list-standalone-page").style.display = "none";
+            document.getElementById("character-category-page").style.display = "none";
             document.getElementById("folder-standalone-page").style.display = "block";
             
             document.getElementById("folder-page-title").innerText = folderName;
@@ -648,9 +759,7 @@
 
             try {
                 const res = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${BASE_PATH}/${folderName}`, {
-                    headers: {
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
                 });
                 if (!res.ok) throw new Error(`请求失败: ${res.status}`);
                 const data = await res.json();
@@ -681,7 +790,14 @@
         function backToHome() {
             document.getElementById("home-page").style.display = "block";
             document.getElementById("list-standalone-page").style.display = "none";
+            document.getElementById("character-category-page").style.display = "none";
             document.getElementById("folder-standalone-page").style.display = "none";
+        }
+
+        // 返回角色分类页
+        function backToCategory() {
+            document.getElementById("character-category-page").style.display = "block";
+            document.getElementById("list-standalone-page").style.display = "none";
         }
 
         // 壁纸搜索
