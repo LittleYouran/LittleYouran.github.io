@@ -32,6 +32,8 @@
             --mask-bg: rgba(0,0,0,0.85);
             --download-btn: #2188ff;
             --folder-color: #ff9900;
+            --first-card-border: 3px solid #00ffff; /* 第一张图高光边框颜色 */
+            --first-card-shadow: 0 0 15px #00ffff, 0 0 25px #00ffff; /* 高光发光效果 */
         }
 
         body{
@@ -344,6 +346,12 @@
             padding: 10px;
             background: var(--bg-highlight);
             text-align: center;
+            position: relative;
+        }
+        /* 第一张图片高光边框样式 */
+        .image-card:first-child {
+            border: var(--first-card-border);
+            box-shadow: var(--first-card-shadow);
         }
 
         .image-preview {
@@ -351,8 +359,19 @@
             height: 130px;
             object-fit: cover;
             border-radius: 6px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             cursor: pointer;
+        }
+
+        /* 文件名显示样式 */
+        .image-name {
+            font-size: 12px;
+            color: #fff;
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 5px;
         }
 
         .image-download-btn {
@@ -727,7 +746,7 @@
             }
         }
 
-        // 渲染壁纸网格
+        // 渲染壁纸网格（新增文件名显示 + 第一张高光）
         function renderWallpaperGrid(data) {
             if(data.length === 0) {
                 document.getElementById("wallpaper-grid").innerHTML = "<li class='empty-tip'>暂无壁纸</li>";
@@ -735,10 +754,11 @@
             }
 
             let html = "";
-            data.forEach(img => {
+            data.forEach((img, index) => {
                 html += `
                     <li class="image-card">
                         <img src="${img.download_url}" alt="${img.name}" class="image-preview" onclick="openPreview('${img.download_url}')">
+                        <div class="image-name" title="${img.name}">${img.name}</div>
                         <button class="image-download-btn" onclick="handleWallpaperDownload('${img.download_url}', '${img.name}')">下载</button>
                     </li>
                 `;
