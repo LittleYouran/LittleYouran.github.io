@@ -32,6 +32,8 @@
             --mask-bg: rgba(0,0,0,0.85);
             --download-btn: #2188ff;
             --folder-color: #ff9900;
+            --category-img-border: 2px solid #fff;
+            --category-img-shadow: 0 0 10px rgba(255,255,255,0.5);
         }
 
         body{
@@ -195,26 +197,41 @@
             border-color: #666;
         }
 
-        /* 角色分类文件夹样式 */
+        /* 角色分类页样式 - 重点修改：展示角色第一张图 */
+        #character-category-page {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+            padding: 15px;
+            background: inherit;
+        }
+        .character-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        .character-img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: var(--category-img-border);
+            box-shadow: var(--category-img-shadow);
+        }
+        .character-name {
+            font-size: 14px;
+            color: var(--text-highlight);
+            text-align: center;
+        }
         .character-folder-group {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 15px;
             justify-content: center;
             margin: 20px 0;
-        }
-        .character-folder-btn {
-            padding: 12px 20px;
-            background: linear-gradient(135deg, var(--folder-color), #e68a00);
-            border: 1px solid #ffcc00;
-            border-radius: 8px;
-            color: #fff;
-            font-weight: bold;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-        .character-folder-btn:hover {
-            background: linear-gradient(135deg, #ff8800, #cc7000);
         }
 
         .tag {
@@ -246,15 +263,6 @@
 
         /* 独立列表页样式（无首页冗余内容） */
         #list-standalone-page {
-            display: none;
-            width: 100%;
-            min-height: 100vh;
-            padding: 15px;
-            background: inherit;
-        }
-
-        /* 角色分类页样式 */
-        #character-category-page {
             display: none;
             width: 100%;
             min-height: 100vh;
@@ -377,17 +385,6 @@
             width: 100%;
         }
 
-        /* 跳转按钮样式（替代第一张的下载） */
-        .image-jump-btn {
-            padding: 6px 12px;
-            background: #ff6600;
-            border: none;
-            border-radius: 4px;
-            color: white;
-            cursor: pointer;
-            width: 100%;
-        }
-
         /* 移动端文件列表适配核心 */
         .file-list {
             width: 100%;
@@ -485,6 +482,10 @@
 
         /* 移动端适配补充 */
         @media (max-width: 600px) {
+            .character-img {
+                width: 100px;
+                height: 100px;
+            }
             .image-grid {
                 grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
                 gap: 10px;
@@ -555,7 +556,7 @@
         </div>
     </div>
 
-    <!-- 角色分类页 -->
+    <!-- 角色分类页 - 核心修改：展示每个角色的第一张图 -->
     <div id="character-category-page">
         <div class="standalone-header">
             <h2 class="standalone-title" id="category-page-title">横屏壁纸 - 角色分类</h2>
@@ -615,13 +616,13 @@
         const BASE_PATH = "docs/files";
         const BACKUP_BG = "https://picsum.photos/1080/1920";
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        // 跳转目标地址（你可以改成自己需要的链接）
-        const JUMP_TARGET_URL = "https://aquapuf.xyz"; 
 
         // 全局变量
         let wallpaperData = [];
-        let currentScreenType = ""; // 记录当前是横屏/竖屏
-        let currentCharacter = ""; // 记录当前角色
+        let currentScreenType = "";
+        let currentCharacter = "";
+        // 存储角色和对应第一张图的映射
+        let characterFirstImgMap = {};
 
         // 页面初始化
         window.onload = function() {
@@ -629,13 +630,13 @@
             setRandomBg();
         };
 
-        // 检测设备并设置背景
+        // 检测设备
         function detectDevice() {
             const deviceText = isMobile ? "手机" : "电脑/平板";
             document.getElementById("device-type").innerText = `当前设备：${deviceText} | 刷新页面切换背景`;
         }
 
-        // 核心修改：递归获取指定分类下所有壁纸，随机选一张
+        // 递归获取指定分类下所有壁纸，用于随机背景
         async function getAllWallpapersInCategory(baseFolder) {
             let allImages = [];
             try {
@@ -647,11 +648,9 @@
                 
                 for (const item of items) {
                     if (item.type === "dir") {
-                        // 递归获取子文件夹里的图片
                         const subFolderImages = await getAllWallpapersInCategory(item.path);
                         allImages = [...allImages, ...subFolderImages];
                     } else if (item.type === "file") {
-                        // 筛选图片格式
                         const ext = item.name.split(".").pop().toLowerCase();
                         if (["jpg", "png", "jpeg", "gif"].includes(ext)) {
                             allImages.push(item);
@@ -664,15 +663,12 @@
             return allImages;
         }
 
-        // 背景图随机逻辑：当前设备分类下（横/竖），全量随机
+        // 随机背景图逻辑
         async function setRandomBg() {
-            // 确定当前设备对应的分类文件夹
             const targetFolder = isMobile ? `${BASE_PATH}/竖屏` : `${BASE_PATH}/横屏`;
             try {
-                // 获取该分类下所有图片（含子文件夹）
                 const allImages = await getAllWallpapersInCategory(targetFolder);
                 if (allImages.length > 0) {
-                    // 随机选一张
                     const randomImg = allImages[Math.floor(Math.random() * allImages.length)];
                     document.body.style.backgroundImage = `url(${randomImg.download_url})`;
                 } else {
@@ -684,7 +680,25 @@
             }
         }
 
-        // 打开壁纸分类页（横屏/竖屏）
+        // 获取角色文件夹的第一张图片
+        async function getCharacterFirstImage(folderPath) {
+            try {
+                const res = await fetch(`https://api.github.com/repos/${USER_NAME}/${REPO_NAME}/contents/${folderPath}`, {
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                });
+                if (!res.ok) throw new Error(`请求失败: ${res.status}`);
+                const items = await res.json();
+                // 筛选图片文件
+                const imgItems = items.filter(item => item.type === "file" && ["jpg","png","jpeg","gif"].includes(item.name.split(".").pop().toLowerCase()));
+                // 返回第一张图的链接，没有则返回默认图
+                return imgItems.length > 0 ? imgItems[0].download_url : "https://picsum.photos/120/120";
+            } catch (err) {
+                console.log(`获取${folderPath}第一张图失败:`, err);
+                return "https://picsum.photos/120/120";
+            }
+        }
+
+        // 打开壁纸分类页（横屏/竖屏）- 核心修改：渲染角色+第一张图
         async function openWallpaperCategory(screenType) {
             currentScreenType = screenType;
             const title = screenType === "landscape" ? "横屏壁纸 - 角色分类" : "竖屏壁纸 - 角色分类";
@@ -705,7 +719,6 @@
                 });
                 if (!res.ok) throw new Error(`请求失败: ${res.status}`);
                 const data = await res.json();
-                // 筛选出文件夹（角色分类）
                 const characterFolders = data.filter(item => item.type === "dir");
                 
                 if (characterFolders.length === 0) {
@@ -713,10 +726,20 @@
                     return;
                 }
 
+                // 清空映射表
+                characterFirstImgMap = {};
                 let html = "";
-                characterFolders.forEach(folder => {
-                    html += `<button class="character-folder-btn" onclick="openCharacterWallpaper('${folder.name}')">${folder.name}</button>`;
-                });
+                // 遍历每个角色文件夹，获取第一张图
+                for (const folder of characterFolders) {
+                    const firstImgUrl = await getCharacterFirstImage(folder.path);
+                    characterFirstImgMap[folder.name] = firstImgUrl;
+                    html += `
+                        <div class="character-item" onclick="openCharacterWallpaper('${folder.name}')">
+                            <img src="${firstImgUrl}" alt="${folder.name}" class="character-img">
+                            <span class="character-name">${folder.name}</span>
+                        </div>
+                    `;
+                }
                 container.innerHTML = html;
             } catch (err) {
                 console.log('角色分类加载失败:', err);
@@ -752,7 +775,7 @@
             }
         }
 
-        // 渲染壁纸网格（第一张改为跳转按钮，去掉高光）
+        // 渲染壁纸列表（所有图片都是下载按钮）
         function renderWallpaperGrid(data) {
             if(data.length === 0) {
                 document.getElementById("wallpaper-grid").innerHTML = "<li class='empty-tip'>暂无壁纸</li>";
@@ -761,32 +784,15 @@
 
             let html = "";
             data.forEach((img, index) => {
-                if (index === 0) {
-                    // 第一张图片：跳转按钮
-                    html += `
-                        <li class="image-card">
-                            <img src="${img.download_url}" alt="${img.name}" class="image-preview" onclick="openPreview('${img.download_url}')">
-                            <div class="image-name" title="${img.name}">${img.name}</div>
-                            <button class="image-jump-btn" onclick="jumpToTarget()">跳转至目标页面</button>
-                        </li>
-                    `;
-                } else {
-                    // 其他图片：下载按钮
-                    html += `
-                        <li class="image-card">
-                            <img src="${img.download_url}" alt="${img.name}" class="image-preview" onclick="openPreview('${img.download_url}')">
-                            <div class="image-name" title="${img.name}">${img.name}</div>
-                            <button class="image-download-btn" onclick="handleWallpaperDownload('${img.download_url}', '${img.name}')">下载</button>
-                        </li>
-                    `;
-                }
+                html += `
+                    <li class="image-card">
+                        <img src="${img.download_url}" alt="${img.name}" class="image-preview" onclick="openPreview('${img.download_url}')">
+                        <div class="image-name" title="${img.name}">${img.name}</div>
+                        <button class="image-download-btn" onclick="handleWallpaperDownload('${img.download_url}', '${img.name}')">下载</button>
+                    </li>
+                `;
             });
             document.getElementById("wallpaper-grid").innerHTML = html;
-        }
-
-        // 跳转至目标页面的函数
-        function jumpToTarget() {
-            window.open(JUMP_TARGET_URL, '_blank');
         }
 
         // 打开独立文件夹页
@@ -878,7 +884,7 @@
             document.body.style.overflow = "auto";
         }
 
-        // 壁纸下载独立函数
+        // 壁纸下载
         function handleWallpaperDownload(url, fileName) {
             const a = document.createElement('a');
             a.href = url;
@@ -890,14 +896,13 @@
             alert(`开始下载壁纸：${fileName}`);
         }
 
-        // 通用文件下载（优化移动端下载）
+        // 通用文件下载
         function downloadFile(url, fileName) {
             const a = document.createElement('a');
             a.href = url;
             a.download = fileName;
             a.style.display = 'none';
             document.body.appendChild(a);
-            // 移动端触发点击兼容
             if (isMobile) {
                 const event = new MouseEvent('click', {
                     view: window,
