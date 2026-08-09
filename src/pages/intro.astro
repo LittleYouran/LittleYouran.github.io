@@ -11,6 +11,20 @@ const title = 'Till the Lands Become an Orange';
     <title>{title}</title>
     <style>
       :root { background: #82c9ec; color: #fff; }
+      @view-transition { navigation: auto; }
+      ::view-transition-old(root) {
+        animation: intro-old-up .72s cubic-bezier(.2,.76,.24,1) both;
+      }
+      ::view-transition-new(root) {
+        animation: intro-new-arrive .74s cubic-bezier(.2,.78,.22,1) both;
+      }
+      @keyframes intro-old-up {
+        to { opacity: 0; transform: translateY(-15%) scale(1.025); filter: blur(2px); }
+      }
+      @keyframes intro-new-arrive {
+        from { opacity: 0; transform: translateY(12%) scale(1.018); filter: blur(2px); }
+        to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+      }
       * { box-sizing: border-box; }
       html, body { margin: 0; width: 100%; min-height: 100%; }
       body { overflow: hidden; font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }

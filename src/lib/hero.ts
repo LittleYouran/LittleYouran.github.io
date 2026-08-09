@@ -126,7 +126,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   const stickerEls: HTMLImageElement[] = [];
   for (const src of opts.stickers) {
     const img = document.createElement('img');
-    img.className = 'hero-sticker';
+      img.className = 'hero-sticker hero-sticker--single';
     img.src = src;
     img.alt = '';
     img.draggable = false;
@@ -167,20 +167,19 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
       const phase = (i * 2.399963229728653) % 1;
       const jx = (phase - 0.5) * cellW * 0.18;
       const jy = (((i * 7) % 11) / 10 - 0.5) * cellH * 0.14;
-      const size = Math.min(width, height) * (0.085 + (i % 4) * 0.009);
-      const x = gx * cellW + cellW * 0.5 - size / 2 + jx;
-      const y = gy * cellH + cellH * 0.5 - size / 2 + jy;
+      const size = Math.min(width, height) * 0.19;
+      const x = width * 0.77 - size / 2 + jx;
+      const y = height * 0.62 - size / 2 + jy;
       // 中央标题区留白，角色向四周排，不再挤成一团。
       const centerX = x + size / 2;
       const centerY = y + size / 2;
-      const inTitleSafeZone = centerX > width * 0.25 && centerX < width * 0.75 && centerY > height * 0.31 && centerY < height * 0.69;
+      const inTitleSafeZone = false;
       const spreadX = inTitleSafeZone ? (centerX < width / 2 ? -cellW * 0.62 : cellW * 0.62) : 0;
       const spreadY = inTitleSafeZone ? (centerY < height / 2 ? -cellH * 0.38 : cellH * 0.38) : 0;
       const rot = ((i * 11) % 17) - 8;
       const z = i % 3 === 0 ? 12 : 8;
       // Source image 15 remains the right-side accent after sticker-3 is removed.
-      const rightAccent = i === 9;
-      img.style.cssText = `left:${rightAccent ? width - size * 1.18 : x + spreadX}px;top:${rightAccent ? height * 0.38 : y + spreadY}px;width:${size}px;height:auto;z-index:${z};transform:rotate(${rightAccent ? -6 : rot}deg);opacity:0;`;
+      img.style.cssText = `left:${x + spreadX}px;top:${y + spreadY}px;width:${size}px;height:auto;z-index:${z};transform:rotate(-5deg);opacity:0;`;
     }
   }
 
@@ -243,7 +242,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   function spawnBoom(x: number, y: number) {
     const colors = ['255,120,60', '255,180,80', '255,90,120', '255,220,140', '180,120,255', '120,200,255'];
     boomParticles = [];
-    const count = weak ? 90 : 150;
+    const count = weak ? 125 : 210;
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = 4 + Math.random() * 16;
@@ -365,13 +364,13 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
     },
     TSUNAMI: {
       enter() {
-        // 背板本体立即成为完整全屏层；波浪只表达揭幕边缘，避免裁切残留露出黑块。
         acrylic.style.opacity = '1';
-        clearClip(acrylic);
+        setWaveClip(acrylic, 104);
       },
       update() {
         const t = Math.min(1, sm.time / 920);
-        const edge = 102 - t * 104;
+        const edge = 104 - t * 110;
+        setWaveClip(acrylic, edge);
         positionWave(edge, Math.sin(t * Math.PI) * 0.9);
         // 爆炸粒子继续飞散
         for (const p of boomParticles) {
@@ -393,7 +392,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
       },
       update() {
         const t = Math.min(1, sm.time / 980);
-        const edge = 102 - t * 104;
+        const edge = 104 - t * 110;
         setWaveClip(stickerLayer, edge);
         positionWave(edge, Math.sin(t * Math.PI) * 0.72);
         setStickerOpacity(Math.min(1, t * 1.5));
@@ -578,7 +577,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
       }
     }
     resize();
-    runnerSize = Math.min(width, height) * 0.22;
+    runnerSize = Math.min(width, height) * 0.265;
     layoutStickers();
 
     // reduced-motion：直接显示背景贴纸墙 + 标题，跳过动画

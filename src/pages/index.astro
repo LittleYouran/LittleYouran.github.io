@@ -17,10 +17,25 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         --bg-1: #171226;
         --fg: #eee;
       }
-      @keyframes page-lift-off {
+      @view-transition { navigation: auto; }
+      ::view-transition-old(root) {
+        animation: old-page-descend .72s cubic-bezier(.25,.76,.25,1) both;
+        transform-origin: 50% 0;
+      }
+      ::view-transition-new(root) {
+        animation: new-page-lift .74s cubic-bezier(.2,.78,.22,1) both;
+      }
+      @keyframes old-page-descend {
+        to { opacity: 0; transform: translateY(18%) scale(.985); filter: blur(2px); }
+      }
+      @keyframes new-page-lift {
+        from { opacity: 0; transform: translateY(14%) scale(1.015); filter: blur(2px); }
+        to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+      }
+      @keyframes page-dive-away {
         0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); opacity: 1; }
-        55% { transform: translate3d(0, -18%, 0) rotate(-2deg) scale(1.035); opacity: 1; }
-        100% { transform: translate3d(0, -112%, 0) rotate(-7deg) scale(1.08); opacity: 0; }
+        48% { transform: translate3d(0, 10%, 0) rotate(1.2deg) scale(.985); opacity: 1; filter: blur(1px); }
+        100% { transform: translate3d(0, 105%, 0) rotate(3deg) scale(.96); opacity: 0; filter: blur(3px); }
       }
       @keyframes sky-wash {
         0% { opacity: 0; transform: translateY(100%); }
@@ -39,8 +54,8 @@ import HeroCanvas from '../components/HeroCanvas.astro';
       body.page-leaving .hero-wrap,
       body.page-leaving .site-header,
       body.page-leaving .hero-pad {
-        animation: page-lift-off 1.05s cubic-bezier(.18,.78,.2,1) forwards;
-        transform-origin: 50% 100%;
+        animation: page-dive-away 1.16s cubic-bezier(.2,.76,.24,1) forwards;
+        transform-origin: 50% 0%;
       }
       body.page-leaving::after {
         content: '';
@@ -48,8 +63,8 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         inset: 0;
         z-index: 200;
         pointer-events: none;
-        background: linear-gradient(180deg, rgba(111, 190, 230, 0) 0%, rgba(179, 226, 245, .9) 100%);
-        animation: sky-wash 1.05s ease-out forwards;
+        background: linear-gradient(180deg, rgba(187,228,246,0) 0%, rgba(188,229,248,.52) 56%, rgba(142,204,233,.92) 100%);
+        animation: sky-wash 1.16s ease-out forwards;
       }
       /* Quiet floating navigation, without the previous black strip. */
       .site-header {
@@ -166,13 +181,13 @@ import HeroCanvas from '../components/HeroCanvas.astro';
       </div>
     </main>
     <script>
-      const next = document.querySelector('.next-btn');
-      next?.addEventListener('click', (event) => {
+      const introLinks = document.querySelectorAll('a[href="/intro/"]');
+      introLinks.forEach((next) => next.addEventListener('click', (event) => {
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         event.preventDefault();
         document.body.classList.add('page-leaving');
-        window.setTimeout(() => { window.location.href = next.href; }, 920);
-      });
+        window.setTimeout(() => { window.location.href = next.href; }, 1120);
+      }));
     </script>
   </body>
 </html>

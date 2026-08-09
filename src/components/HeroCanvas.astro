@@ -10,17 +10,16 @@
 //   titleDecoSrc:标题装饰角色图 URL
 //   followSize:   跟随小角色尺寸 px（默认 82）
 const {
-  stickerBase = '/hero/v8/',
+  stickerBase = '/hero/v10/',
   gifSrc = '/hero/v8/runner.webp',
   followGifSrc = '/hero/v8/runner.webp',
-  titleSrc = '/hero/v8/title.webp',
-  titleDecoSrc = '/hero/v8/deco.webp',
+  titleSrc = '/hero/v10/title.webp',
+  titleDecoSrc = '/hero/v10/deco-14.webp',
   followSize = 82,
 } = Astro.props;
 
-// sticker-3 是标题/星芒素材，不应再作为角色贴纸重复展示。
-const stickerIds = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-const stickers = stickerIds.map((id) => `${stickerBase}sticker-${id}.webp`);
+// 首屏只保留 3（标题）、14 与 16（两张装饰）。
+const stickers = [`${stickerBase}deco-16.webp`];
 ---
 
 <div
@@ -44,20 +43,27 @@ const stickers = stickerIds.map((id) => `${stickerBase}sticker-${id}.webp`);
     overflow: hidden;
     background: #9ed8f2;
   }
+  .hero-sticker--single {
+    filter: drop-shadow(0 12px 26px rgba(17, 78, 114, 0.3));
+  }
   .hero-wrap * { pointer-events: none !important; }
+  /* 像圆柱从布料下面滚过去形成的隆起，不是水面波纹。 */
   .hero-reveal-wave {
     position: absolute;
     left: 0;
     top: 50%;
     z-index: 9;
-    width: clamp(120px, 14vw, 240px);
-    height: 150vh;
+    width: clamp(300px, 48vw, 820px);
+    height: 126vh;
     border-radius: 50%;
     pointer-events: none;
     opacity: 0;
-    background: linear-gradient(90deg, rgba(197, 226, 255, 0), rgba(228, 244, 255, 0.44), rgba(255, 201, 145, 0.16), rgba(197, 226, 255, 0));
-    filter: blur(16px);
-    mix-blend-mode: screen;
+    background:
+      radial-gradient(ellipse at 68% 48%, rgba(255,255,255,.58) 0 5%, rgba(223,245,255,.34) 15%, rgba(123,195,231,.16) 36%, transparent 66%),
+      linear-gradient(90deg, transparent 0 23%, rgba(32,99,142,.26) 38%, rgba(255,255,255,.43) 59%, rgba(114,193,232,.12) 77%, transparent 100%);
+    border: 1px solid rgba(239,251,255,.43);
+    box-shadow: -48px 0 58px rgba(22,83,123,.28), 34px 0 48px rgba(255,255,255,.22), inset -18px 0 30px rgba(255,255,255,.2);
+    filter: blur(2px);
     will-change: transform, opacity;
   }
   .hero-bg {
@@ -167,12 +173,12 @@ const stickers = stickerIds.map((id) => `${stickerBase}sticker-${id}.webp`);
     height: auto;
     filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.42));
   }
-  /* 翘腿角色装饰：放在标题上面（叠在"大地"大字上） */
+   /* 14 号装饰：放在标题上面（叠在“大地”大字上）。 */
   .hero-title-deco {
     position: absolute;
     left: 46%;
     bottom: 53%;
-    max-width: min(24vw, 240px);
+     max-width: min(20vw, 210px);
     width: 100%;
     height: auto;
     transform: translateX(-50%);
