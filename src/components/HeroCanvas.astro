@@ -11,18 +11,18 @@
 //   stickerCount: 贴纸数量（默认 12）
 //   followSize:   跟随小角色尺寸 px（默认 96）
 const {
-  stickerBase = '/hero/v7/',
-  gifSrc = '/hero/v7/runner-clean.gif',
-  followGifSrc = '/hero/v7/runner-clean.gif',
-  titleSrc = '/hero/v7/title.png',
-  titleDecoSrc = '/hero/v7/deco.png',
+  stickerBase = '/hero/v8/',
+  gifSrc = '/hero/v8/runner.webp',
+  followGifSrc = '/hero/v8/runner.webp',
+  titleSrc = '/hero/v8/title.webp',
+  titleDecoSrc = '/hero/v8/deco.webp',
   stickerCount = 12,
   followSize = 82,
 } = Astro.props;
 
 const stickers = Array.from(
   { length: stickerCount },
-  (_, i) => `${stickerBase}sticker-${i + 1}.png`,
+  (_, i) => `${stickerBase}sticker-${i + 1}.webp`,
 );
 ---
 
@@ -47,11 +47,12 @@ const stickers = Array.from(
     overflow: hidden;
     background: #0d0a16;
   }
+  .hero-wrap * { pointer-events: none !important; }
   .hero-reveal-wave {
     position: absolute;
     left: 0;
     top: 50%;
-    z-index: 4;
+    z-index: 9;
     width: clamp(120px, 14vw, 240px);
     height: 150vh;
     border-radius: 50%;
@@ -67,23 +68,25 @@ const stickers = Array.from(
     inset: 0;
     z-index: 1;
     background:
-      radial-gradient(ellipse at 50% 38%, rgba(108, 88, 145, 0.58) 0%, rgba(49, 38, 72, 0.78) 58%, rgba(13, 10, 22, 0.96) 100%);
+      radial-gradient(ellipse at 50% 38%, #7c7196 0%, #403752 58%, #171321 100%);
   }
   .hero-acrylic {
     position: absolute;
     inset: 0;
-    z-index: 2;
+    z-index: 10;
     pointer-events: none;
     background:
-      linear-gradient(125deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.07) 30%, rgba(255, 255, 255, 0.13) 68%, rgba(255, 255, 255, 0.04) 100%),
-      rgba(175, 194, 218, 0.14);
-    border: 1px solid rgba(255, 255, 255, 0.28);
+      linear-gradient(118deg, rgba(255, 255, 255, 0.36) 0%, rgba(216, 236, 248, 0.1) 31%, rgba(255, 255, 255, 0.24) 68%, rgba(183, 214, 231, 0.1) 100%),
+      linear-gradient(90deg, rgba(207, 229, 241, 0.2), rgba(255, 255, 255, 0.09) 50%, rgba(178, 211, 229, 0.2)),
+      rgba(179, 205, 221, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.46);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.32),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.08),
-      0 24px 80px rgba(4, 2, 12, 0.34);
-    backdrop-filter: blur(18px) saturate(1.35) contrast(1.04);
-    -webkit-backdrop-filter: blur(18px) saturate(1.35) contrast(1.04);
+      inset 0 2px 0 rgba(255, 255, 255, 0.48),
+      inset 0 -2px 0 rgba(120, 169, 196, 0.2),
+      inset 28px 0 70px rgba(255, 255, 255, 0.05),
+      0 24px 80px rgba(4, 2, 12, 0.28);
+    backdrop-filter: blur(11px) saturate(1.42) contrast(1.04);
+    -webkit-backdrop-filter: blur(11px) saturate(1.42) contrast(1.04);
     opacity: 0;
   }
   .hero-acrylic::before,
@@ -94,17 +97,18 @@ const stickers = Array.from(
     pointer-events: none;
   }
   .hero-acrylic::before {
-    opacity: 0.42;
+    opacity: 0.9;
     background:
-      repeating-linear-gradient(100deg, rgba(255,255,255,.055) 0 1px, transparent 1px 7px),
-      repeating-linear-gradient(8deg, rgba(214,232,255,.035) 0 1px, transparent 1px 9px);
+      repeating-linear-gradient(90deg, rgba(255,255,255,.24) 0 1px, rgba(112,160,188,.08) 1px 2px, transparent 2px 12.5vw),
+      repeating-linear-gradient(0deg, rgba(218,239,250,.2) 0 1px, rgba(96,143,171,.06) 1px 2px, transparent 2px 12.5vh);
     mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
   }
   .hero-acrylic::after {
     background:
-      linear-gradient(104deg, transparent 9%, rgba(255,255,255,.18) 11%, transparent 15%),
-      radial-gradient(ellipse at 72% 18%, rgba(255,255,255,.14), transparent 27%),
-      radial-gradient(ellipse at 20% 82%, rgba(181,218,255,.1), transparent 30%);
+      linear-gradient(104deg, transparent 7%, rgba(255,255,255,.42) 9%, rgba(176,215,235,.13) 11%, transparent 16%),
+      linear-gradient(76deg, transparent 68%, rgba(255,255,255,.22) 72%, transparent 77%),
+      radial-gradient(ellipse at 72% 18%, rgba(255,255,255,.28), transparent 27%),
+      radial-gradient(ellipse at 20% 82%, rgba(181,218,255,.16), transparent 30%);
     mix-blend-mode: screen;
   }
   .hero-sticker-layer {
@@ -162,17 +166,20 @@ const stickers = Array.from(
     transition: opacity 0.9s ease;
   }
   .hero-title-img {
-    max-width: min(78vw, 780px);
+    max-width: min(72vw, 760px);
     width: 100%;
     height: auto;
     filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.42));
   }
   /* 翘腿角色装饰：放在标题上面（叠在"大地"大字上） */
   .hero-title-deco {
-    max-width: min(30vw, 300px);
+    position: absolute;
+    left: 46%;
+    bottom: 53%;
+    max-width: min(24vw, 240px);
     width: 100%;
     height: auto;
-    margin-bottom: -12%;
+    transform: translateX(-50%);
     filter: drop-shadow(0 10px 30px rgba(255, 120, 60, 0.35));
     z-index: 8;
   }

@@ -83,7 +83,7 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         bottom: 7%;
         top: auto;
         transform: translateX(-50%);
-        z-index: 30;
+        z-index: 100;
         text-align: center;
         opacity: 0;
         pointer-events: auto;
@@ -108,18 +108,14 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
         transition: all 0.3s ease;
+        position: relative;
+        z-index: 101;
+        pointer-events: auto;
       }
       .next-btn:hover {
         background: rgba(255, 255, 255, 0.22);
         transform: translateY(-2px);
         box-shadow: 0 6px 24px rgba(255, 120, 60, 0.25);
-      }
-      body.page-leaving main,
-      body.page-leaving .site-header {
-        transform: translateY(-100vh);
-        filter: blur(8px);
-        opacity: 0;
-        transition: transform .72s cubic-bezier(.2,.78,.2,1), filter .5s ease, opacity .55s ease;
       }
     </style>
   </head>
@@ -140,18 +136,9 @@ import HeroCanvas from '../components/HeroCanvas.astro';
       <!-- 首屏占位：文字内容在正常流中，滚动时只有文字上去 -->
       <div class="hero-pad">
          <div class="hero-overlay">
-           <a class="next-btn" href="/intro/">前往下一页 <span aria-hidden="true">→</span></a>
+           <a class="next-btn" href="/intro/" aria-label="前往介绍页">前往下一页 <span aria-hidden="true">→</span></a>
         </div>
       </div>
     </main>
-    <script>
-      document.querySelectorAll('a[href="/intro/"]').forEach((link) => {
-        link.addEventListener('click', (event) => {
-          event.preventDefault();
-          document.body.classList.add('page-leaving');
-          window.setTimeout(() => window.location.assign('/intro/'), 620);
-        });
-      });
-    </script>
   </body>
 </html>

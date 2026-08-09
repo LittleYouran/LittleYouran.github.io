@@ -172,7 +172,8 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
       const y = gy * cellH + cellH * 0.5 - size / 2 + jy;
       const rot = ((i * 11) % 17) - 8;
       const z = i % 3 === 0 ? 3 : 1;
-      const rightAccent = i === n - 1;
+      // Source image 15 is sticker-11 and stays as the right-side accent.
+      const rightAccent = i === 10;
       img.style.cssText = `left:${rightAccent ? width - size * 1.18 : x}px;top:${rightAccent ? height * 0.38 : y}px;width:${size}px;height:auto;z-index:${z};transform:rotate(${rightAccent ? -6 : rot}deg);opacity:0;`;
     }
   }
@@ -324,7 +325,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
         runner.style.transform = `translate(${width * 0.25 - runnerSize / 2}px, ${height / 2 - runnerSize / 2}px)`;
       },
       update() {
-        const t = Math.min(1, sm.time / 820);
+        const t = Math.min(1, sm.time / 760);
         const ease = t * t * t;
         const x = width * 0.25 - runnerSize / 2 + (width * 0.75) * ease;
         runner.style.transform = `translate(${x}px, ${height / 2 - runnerSize / 2}px)`;
@@ -339,7 +340,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
       enter() {
         runner.style.opacity = '0';
         spawnBoom(crashX, crashY);
-        // 空屏背景下爆炸
+        // The impact reveals only the neutral base. Acrylic arrives with wave one.
         bg.style.opacity = '1';
       },
       update() {
@@ -361,7 +362,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
         acrylic.style.opacity = '1';
       },
       update() {
-        const t = Math.min(1, sm.time / 1050);
+        const t = Math.min(1, sm.time / 920);
         const edge = 102 - t * 104;
         setWaveClip(acrylic, edge);
         positionWave(edge, Math.sin(t * Math.PI) * 0.9);
@@ -384,7 +385,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
         stickerLayer.style.opacity = '1';
       },
       update() {
-        const t = Math.min(1, sm.time / 1150);
+        const t = Math.min(1, sm.time / 980);
         const edge = 102 - t * 104;
         setWaveClip(stickerLayer, edge);
         positionWave(edge, Math.sin(t * Math.PI) * 0.72);
