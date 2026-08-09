@@ -8,6 +8,7 @@ import HeroCanvas from '../components/HeroCanvas.astro';
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><circle cx=%2232%22 cy=%2232%22 r=%2228%22 fill=%22%23f39a43%22/><path d=%22M14 32h36M32 14c8 8 8 28 0 36M32 14c-8 8-8 28 0 36%22 stroke=%22%23ffd98a%22 stroke-width=%223%22 fill=%22none%22/></svg>" />
     <title>youran 的博客</title>
     <meta name="description" content="技术折腾记录：Linux 桌面、内核编译、AI、游戏" />
     <style>
@@ -23,21 +24,28 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         color: var(--fg);
         font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
         min-height: 100vh;
+        overflow: hidden;
       }
-      /* 顶部导航：浮在最上层 */
+      /* Quiet floating navigation, without the previous black strip. */
       .site-header {
         position: fixed;
         top: 0;
-        left: 0;
-        right: 0;
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
         z-index: 20;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 16px 32px;
-        background: rgba(13, 10, 22, 0.55);
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        width: min(92vw, 760px);
+        margin-top: 14px;
+        padding: 11px 18px;
+        border-radius: 8px;
+        background: rgba(215, 226, 239, 0.13);
+        backdrop-filter: blur(16px) saturate(1.25);
+        -webkit-backdrop-filter: blur(16px) saturate(1.25);
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        box-shadow: 0 12px 36px rgba(5, 3, 14, 0.22), inset 0 1px rgba(255,255,255,.26);
       }
       .site-header .logo {
         font-weight: 700;
@@ -68,7 +76,6 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         min-height: 480px;
         position: relative;
         z-index: 10;
-        pointer-events: none;
       }
       .hero-overlay {
         position: absolute;
@@ -76,9 +83,10 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         bottom: 7%;
         top: auto;
         transform: translateX(-50%);
-        z-index: 11;
+        z-index: 30;
         text-align: center;
         opacity: 0;
+        pointer-events: auto;
         transition: opacity 0.9s ease;
       }
       .hero-overlay.show { opacity: 1; }
@@ -89,7 +97,7 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         display: inline-block;
         margin-top: 18px;
         padding: 10px 28px;
-        border-radius: 40px;
+        border-radius: 8px;
         background: rgba(255, 255, 255, 0.12);
         border: 1px solid rgba(255, 255, 255, 0.28);
         color: #fff;
@@ -106,80 +114,13 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         transform: translateY(-2px);
         box-shadow: 0 6px 24px rgba(255, 120, 60, 0.25);
       }
-      .posts {
-        max-width: 860px;
-        margin: 0 auto 40px;
-        padding: 48px 24px 24px;
-        position: relative;
-        z-index: 10;
-        background: linear-gradient(180deg, rgba(13,10,22,0.85) 0%, rgba(13,10,22,0.97) 30%, var(--bg-0) 100%);
-        border-radius: 18px 18px 0 0;
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
-      }
-      .posts h2 {
-        font-size: 22px;
-        margin-bottom: 16px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-      }
-      .posts p { line-height: 1.9; opacity: 0.85; margin-bottom: 16px; }
-      .about { padding: 0 24px 60px; max-width: 860px; margin: 0 auto; position: relative; z-index: 10; }
-      .about h2 {
-        font-size: 22px;
-        margin-bottom: 16px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-      }
-      .about p { line-height: 1.9; opacity: 0.85; margin-bottom: 16px; }
-      /* 第二页：大背景图 + 介绍 */
-      .page2 {
-        position: relative;
-        z-index: 10;
-        min-height: 100dvh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-      }
-      .page2-bg {
-        position: absolute;
-        inset: 0;
-         background-image: url('/hero/v7/intro-bg.png');
-        background-size: cover;
-        background-position: center;
-        z-index: 0;
-      }
-      .page2-bg::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: rgba(13, 10, 22, 0.45);
-        backdrop-filter: blur(2px);
-        -webkit-backdrop-filter: blur(2px);
-      }
-      .page2-content {
-        position: relative;
-        z-index: 1;
-        max-width: 680px;
-        margin: 0 24px;
-        padding: 40px;
-        border-radius: 24px;
-        background: rgba(13, 10, 22, 0.55);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        text-align: center;
+      body.page-leaving main,
+      body.page-leaving .site-header {
+        transform: translateY(-100vh);
+        filter: blur(8px);
         opacity: 0;
-        transform: translateY(30px);
-        transition: opacity 0.8s ease, transform 0.8s ease;
+        transition: transform .72s cubic-bezier(.2,.78,.2,1), filter .5s ease, opacity .55s ease;
       }
-      .page2-content.visible {
-        opacity: 1;
-        transform: translateY(0);
-      }
-      .page2-content h2 { font-size: 28px; letter-spacing: 3px; margin-bottom: 20px; }
-      .page2-content p { line-height: 2; opacity: 0.9; margin-bottom: 16px; }
     </style>
   </head>
   <body>
@@ -187,8 +128,8 @@ import HeroCanvas from '../components/HeroCanvas.astro';
       <div class="logo">youran.dev</div>
       <nav>
         <a href="/">首页</a>
-        <a href="#posts">文章</a>
-        <a href="#about">关于</a>
+        <a href="/intro/">文章</a>
+        <a href="/intro/">关于</a>
       </nav>
     </header>
 
@@ -199,22 +140,18 @@ import HeroCanvas from '../components/HeroCanvas.astro';
       <!-- 首屏占位：文字内容在正常流中，滚动时只有文字上去 -->
       <div class="hero-pad">
          <div class="hero-overlay">
-           <a class="next-btn" href="/intro">前往下一页 <span aria-hidden="true">→</span></a>
+           <a class="next-btn" href="/intro/">前往下一页 <span aria-hidden="true">→</span></a>
         </div>
       </div>
-
-
-      <section class="posts" id="posts">
-        <h2>最近文章</h2>
-        <p>博客搭建中，敬请期待。</p>
-      </section>
-
-      <section class="about" id="about">
-        <h2>关于</h2>
-        <p>这里是 youran 的技术折腾记录，主要写 Linux 桌面、内核编译、AI 应用和游戏相关的内容。</p>
-      </section>
     </main>
     <script>
+      document.querySelectorAll('a[href="/intro/"]').forEach((link) => {
+        link.addEventListener('click', (event) => {
+          event.preventDefault();
+          document.body.classList.add('page-leaving');
+          window.setTimeout(() => window.location.assign('/intro/'), 620);
+        });
+      });
     </script>
   </body>
 </html>

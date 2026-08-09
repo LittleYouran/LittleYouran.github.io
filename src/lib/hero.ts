@@ -75,6 +75,10 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   stickerLayer.className = 'hero-sticker-layer';
   bg.appendChild(stickerLayer);
 
+  const wave = document.createElement('div');
+  wave.className = 'hero-reveal-wave';
+  bg.appendChild(wave);
+
   const canvas = document.createElement('canvas');
   canvas.className = 'hero-canvas';
   container.appendChild(canvas);
@@ -148,7 +152,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   }
 
   // ---------- 贴纸布局 ----------
-  // v6: 网格 + 抖动分散布局，避免集中/重叠
+  // Stable grid layout keeps every character readable and away from the title.
   function layoutStickers() {
     const n = stickerEls.length;
     const cols = width > height ? 5 : 3;
@@ -160,12 +164,13 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
       // 固定网格加小幅抖动，避免角色堆在标题附近。
       const gx = i % cols;
       const gy = Math.floor(i / cols);
-      const jx = (Math.random() - 0.5) * cellW * 0.16;
-      const jy = (Math.random() - 0.5) * cellH * 0.16;
-      const size = Math.min(width, height) * (0.09 + Math.random() * 0.07);
+      const phase = (i * 2.399963229728653) % 1;
+      const jx = (phase - 0.5) * cellW * 0.18;
+      const jy = (((i * 7) % 11) / 10 - 0.5) * cellH * 0.14;
+      const size = Math.min(width, height) * (0.105 + (i % 4) * 0.012);
       const x = gx * cellW + cellW * 0.5 - size / 2 + jx;
       const y = gy * cellH + cellH * 0.5 - size / 2 + jy;
-      const rot = (Math.random() - 0.5) * 18; // -9° ~ 9°
+      const rot = ((i * 11) % 17) - 8;
       const z = i % 3 === 0 ? 3 : 1;
       const rightAccent = i === n - 1;
       img.style.cssText = `left:${rightAccent ? width - size * 1.18 : x}px;top:${rightAccent ? height * 0.38 : y}px;width:${size}px;height:auto;z-index:${z};transform:rotate(${rightAccent ? -6 : rot}deg);opacity:0;`;
@@ -204,17 +209,22 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   function clearClip(el: HTMLElement) {
     el.style.clipPath = 'none';
   }
-  /** 海啸收尾波浪：多边形波浪线从右往左扫 */
+  /** Cumulative right-to-left reveal with a softly undulating leading edge. */
   function setWaveClip(el: HTMLElement, edgePct: number) {
     const pts: string[] = [];
-    const steps = 16;
+    const steps = 20;
     for (let i = 0; i <= steps; i++) {
       const t = i / steps;
       const y = 100 - t * 100;
-      const wobble = Math.sin(t * Math.PI * 3 + performance.now() * 0.004) * 4;
+      const wobble = Math.sin(t * Math.PI * 2.4 + performance.now() * 0.004) * 2.6;
       pts.push(`${(edgePct + wobble).toFixed(2)}% ${y.toFixed(2)}%`);
     }
-    el.style.clipPath = `polygon(100% 0%, 100% 100%, 0% 100%, ${pts.join(', ')}, 0% 0%)`;
+    el.style.clipPath = `polygon(100% 0%, 100% 100%, ${pts.join(', ')})`;
+  }
+
+  function positionWave(edgePct: number, opacity: number) {
+    wave.style.opacity = String(opacity);
+    wave.style.transform = `translate3d(calc(${edgePct}vw - 50%), -50%, 0)`;
   }
 
   function setStickerOpacity(opacity: number) {
@@ -295,6 +305,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
         clearClip(stickerLayer);
         acrylic.style.opacity = '0';
         stickerLayer.style.opacity = '0';
+        wave.style.opacity = '0';
         bg.style.opacity = '0';
         runner.style.opacity = '0';
         follow.style.opacity = '0';
@@ -346,15 +357,14 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
     },
     TSUNAMI: {
       enter() {
-        // 海啸波浪：从右往左滚动，扫过处铺亚克力背板
+        // First reveal: the full-screen acrylic sheet rolls in from the impact.
         acrylic.style.opacity = '1';
       },
       update() {
-        const t = Math.min(1, sm.time / 1300);
-        // 椭圆中心从右(105%)往左(-5%)滚动，半径收窄形成海啸感
-        const cx = 105 - t * 110;
-        const ry = 90 - t * 20;
-        setEllipseClip(acrylic, cx, ry);
+        const t = Math.min(1, sm.time / 1050);
+        const edge = 102 - t * 104;
+        setWaveClip(acrylic, edge);
+        positionWave(edge, Math.sin(t * Math.PI) * 0.9);
         // 爆炸粒子继续飞散
         for (const p of boomParticles) {
           p.x += p.vx;
@@ -363,6 +373,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
         }
         if (t >= 1) {
           clearClip(acrylic);
+          wave.style.opacity = '0';
           sm.setState('WAVE2');
         }
       },
@@ -373,10 +384,10 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
         stickerLayer.style.opacity = '1';
       },
       update() {
-        const t = Math.min(1, sm.time / 1350);
-        const cx = 105 - t * 110;
-        const ry = 92 - t * 22;
-        setEllipseClip(stickerLayer, cx, ry);
+        const t = Math.min(1, sm.time / 1150);
+        const edge = 102 - t * 104;
+        setWaveClip(stickerLayer, edge);
+        positionWave(edge, Math.sin(t * Math.PI) * 0.72);
         setStickerOpacity(Math.min(1, t * 1.5));
         for (const p of boomParticles) {
           p.x += p.vx;
@@ -385,6 +396,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
         }
         if (t >= 1) {
           clearClip(stickerLayer);
+          wave.style.opacity = '0';
           setStickerOpacity(1);
           sm.setState('WAVE3');
         }
@@ -439,11 +451,11 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
         if (mouseActive) {
           const targetX = mouseX - followSize / 2;
           const targetY = mouseY - followSize / 2;
-          // v6: 更跟手：加速度更大、阻尼更小
-          followVX += (targetX - followX) * 0.22;
-          followVY += (targetY - followY) * 0.22;
-          followVX *= 0.78;
-          followVY *= 0.78;
+          // Critically damped-ish spring: responsive without visible jitter.
+          followVX += (targetX - followX) * 0.31;
+          followVY += (targetY - followY) * 0.31;
+          followVX *= 0.68;
+          followVY *= 0.68;
           followX += followVX;
           followY += followVY;
           follow.style.transform = `translate(${followX}px, ${followY}px)`;
@@ -539,7 +551,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   }
 
   // ---------- 启动 ----------
-  async function start() {
+  function start() {
     runner.src = opts.gifSrc;
     follow.src = opts.followGifSrc || opts.gifSrc;
     // v6: 贴纸后台预加载（不阻塞入场动画，冲刺立即开始）
@@ -550,17 +562,6 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
         img.addEventListener('error', () => {}, { once: true });
       }
     }
-    await Promise.all([
-      new Promise<void>((resolve) => {
-        if (runner.complete) resolve();
-        else runner.addEventListener('load', () => resolve(), { once: true });
-      }),
-      new Promise<void>((resolve) => {
-        if (follow.complete) resolve();
-        else follow.addEventListener('load', () => resolve(), { once: true });
-      }),
-    ]);
-
     resize();
     runnerSize = Math.min(width, height) * 0.22;
     layoutStickers();
@@ -595,25 +596,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
     raf = requestAnimationFrame(loop);
   }
 
-  start().catch((err) => {
-    console.error('[hero] 初始化失败，降级为直接显示贴纸墙', err);
-    bg.style.opacity = '1';
-    clearClip(bg);
-    clearClip(acrylic);
-    clearClip(stickerLayer);
-    acrylic.style.opacity = '1';
-    stickerLayer.style.opacity = '1';
-    setStickerOpacity(1);
-    follow.style.opacity = '1';
-    follow.style.width = `${followSize}px`;
-    follow.style.height = `${followSize}px`;
-    runner.style.display = 'none';
-    if (titleEl) {
-      titleEl.style.visibility = 'visible';
-      titleEl.style.opacity = '1';
-    }
-    opts.onTitleReady?.();
-  });
+  start();
 
   return {
     destroy() {

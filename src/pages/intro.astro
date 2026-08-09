@@ -7,6 +7,7 @@ const title = 'Till the Lands Become an Orange';
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><circle cx=%2232%22 cy=%2232%22 r=%2228%22 fill=%22%23f39a43%22/><path d=%22M14 32h36M32 14c8 8 8 28 0 36M32 14c-8 8-8 28 0 36%22 stroke=%22%23ffd98a%22 stroke-width=%223%22 fill=%22none%22/></svg>" />
     <title>{title}</title>
     <style>
       :root { background: #081b3d; color: #f5f1e8; }
@@ -18,7 +19,16 @@ const title = 'Till the Lands Become an Orange';
         position: relative;
         overflow: hidden;
         background: linear-gradient(180deg, #9dd8f1 0%, #d8eff5 52%, #081b3d 52%, #081b3d 100%);
-        animation: rise 3.4s cubic-bezier(.22,.75,.2,1) both;
+        animation: rise 1.25s cubic-bezier(.18,.82,.22,1) both;
+      }
+      .final-scene {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        background: linear-gradient(rgba(10, 22, 42, .08), rgba(10, 22, 42, .28)), url('/hero/v7/intro-bg.png') center / cover no-repeat;
+        opacity: 0;
+        transform: scale(1.045);
+        animation: final-in 1.05s 3.05s cubic-bezier(.2,.72,.2,1) forwards;
       }
       .sky::before, .sky::after {
         content: ""; position: absolute; left: -10%; width: 120%; height: 26vh;
@@ -28,17 +38,20 @@ const title = 'Till the Lands Become an Orange';
       .sky::after { top: 37%; transform: rotate(3deg); opacity: .55; }
       .title {
         position: absolute; inset: 52% 6% auto; text-align: center;
+        z-index: 4;
         color: #f29a3d; opacity: 0; transform: scale(.92);
-        animation: title-in .9s 2.2s ease-out forwards;
+        animation: title-in .72s 1.35s ease-out forwards, title-out .6s 2.75s ease-in forwards;
         text-shadow: 0 4px 0 rgba(4,17,45,.28);
       }
       h1 { margin: 0; font-size: clamp(28px, 7vw, 76px); line-height: 1.05; font-style: italic; }
       .orange-o { display: inline-grid; place-items: center; width: .82em; height: .82em; border-radius: 50%; background: #f48b30; color: #183568; font-style: normal; box-shadow: inset 0 0 0 .08em #ffd17a, inset 0 0 0 .18em #ec6c25; }
-      .back { position: absolute; top: 24px; left: 28px; color: #08204b; text-decoration: none; font: 600 14px system-ui, sans-serif; opacity: .72; }
-      .intro { position: absolute; inset: auto 0 5%; text-align: center; font: 15px/1.8 system-ui, sans-serif; color: rgba(255,255,255,.82); opacity: 0; animation: title-in .8s 3s forwards; }
+      .back { position: absolute; z-index: 8; top: 24px; left: 28px; color: #fff; text-decoration: none; font: 600 14px system-ui, sans-serif; opacity: .82; text-shadow: 0 2px 8px rgba(0,0,0,.35); }
+      .intro { position: absolute; z-index: 7; inset: auto 0 5%; text-align: center; font: 15px/1.8 system-ui, sans-serif; color: rgba(255,255,255,.92); opacity: 0; text-shadow: 0 2px 12px rgba(0,0,0,.5); animation: title-in .7s 3.65s forwards; }
       @keyframes rise { from { transform: translateY(100%); filter: blur(10px); } to { transform: translateY(0); filter: blur(0); } }
       @keyframes title-in { to { opacity: 1; transform: scale(1); } }
-      @media (prefers-reduced-motion: reduce) { .sky, .title, .intro { animation: none; opacity: 1; transform: none; } }
+      @keyframes title-out { to { opacity: 0; transform: scale(1.04) translateY(-12px); } }
+      @keyframes final-in { to { opacity: 1; transform: scale(1); } }
+      @media (prefers-reduced-motion: reduce) { .sky, .title, .intro, .final-scene { animation: none; opacity: 1; transform: none; } }
     </style>
   </head>
   <body>
@@ -47,6 +60,7 @@ const title = 'Till the Lands Become an Orange';
       <section class="title" aria-label={title}>
         <h1>Till the Lands Become an <span class="orange-o">O</span>range</h1>
       </section>
+      <div class="final-scene" aria-hidden="true"></div>
       <p class="intro">Linux · AI · Kernel · Games<br />youran 的技术折腾记录</p>
     </main>
   </body>
