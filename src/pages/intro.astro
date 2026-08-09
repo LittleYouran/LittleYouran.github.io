@@ -16,16 +16,24 @@ const title = 'Till the Lands Become an Orange';
       body { overflow: hidden; font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
       .intro-page { position: relative; width: 100%; height: 100dvh; min-height: 480px; overflow: hidden; isolation: isolate; background: #82c9ec; }
 
+      /* 最终背景从第一帧就在底层，转场只是在它上方掠过，不再先显示空底。 */
+      .final-scene { position: absolute; inset: 0; z-index: 0; opacity: 1; transform: scale(1.018); animation: final-settle .55s 1.18s cubic-bezier(.2,.72,.2,1) forwards; background: #7fb8d1; }
+      .scene { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; }
+      .scene-main { z-index: 1; opacity: .96; animation: scene-main-drift 18s ease-in-out infinite alternate, scene-brighten .38s 1.02s ease-out forwards; }
+      .scene-alt { z-index: 2; opacity: 0; animation: scene-alt-cycle 18s 6s ease-in-out infinite; }
+      .scene-shade { position: absolute; inset: 0; z-index: 3; background: linear-gradient(90deg, rgba(10,31,51,.2) 0%, rgba(10,31,51,.06) 42%, transparent 72%), linear-gradient(0deg, rgba(7,24,40,.08), transparent 52%); }
+      .copy { position: absolute; z-index: 4; left: clamp(28px, 8vw, 132px); top: 50%; width: min(42rem, 52vw); opacity: 0; transform: translateY(-39%); animation: copy-in .48s 1.28s cubic-bezier(.18,.82,.22,1) forwards; text-shadow: 0 3px 16px rgba(0,0,0,.52); }
+
       /* 整屏天空，不再在中间硬切深蓝。 */
       .sky-stage {
         position: absolute;
         inset: 0;
-        z-index: 1;
+        z-index: 2;
         overflow: hidden;
         background: linear-gradient(180deg, #60b6e4 0%, #9fd9f1 48%, #e7f6fb 100%);
         transform: translateY(102%);
         filter: blur(10px);
-        animation: rise-sky 1.05s cubic-bezier(.18,.82,.22,1) forwards, sky-away .48s 1.38s ease-in forwards;
+        animation: rise-sky .46s cubic-bezier(.18,.82,.22,1) forwards, sky-away .28s .58s ease-in forwards;
       }
       .cloud { position: absolute; left: -15%; width: 130%; border-radius: 50%; background: rgba(255,255,255,.46); filter: blur(30px); }
       .cloud.one { top: 18%; height: 18%; transform: rotate(-4deg); }
@@ -41,9 +49,9 @@ const title = 'Till the Lands Become an Orange';
         background: #123c72;
         opacity: 0;
         transform: translateY(4%);
-        animation: title-stage-in .42s 1.2s ease-out forwards, title-stage-out .48s 2.65s ease-in forwards;
+        animation: title-stage-in .22s .45s ease-out forwards, title-stage-out .3s 1.08s ease-in forwards;
       }
-      .event-title { position: relative; margin: 0 6vw; text-align: center; color: #f5a34c; transform: scale(.92); animation: title-pop .72s 1.35s cubic-bezier(.2,.8,.2,1) forwards; }
+      .event-title { position: relative; margin: 0 6vw; text-align: center; color: #f5a34c; transform: scale(.94); animation: title-pop .34s .52s cubic-bezier(.2,.8,.2,1) forwards; }
       .event-title h1 { margin: 0; max-width: 1100px; font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: clamp(32px, 6.6vw, 86px); line-height: 1.05; letter-spacing: 0; text-shadow: 0 5px 0 rgba(4,17,45,.28); }
       .event-title::before, .event-title::after { content: "✦"; position: absolute; top: 50%; color: #ffd691; font-size: clamp(20px, 3vw, 42px); transform: translateY(-50%); }
       .event-title::before { left: -5vw; }
@@ -51,12 +59,6 @@ const title = 'Till the Lands Become an Orange';
       .orange-o { display: inline-grid; place-items: center; width: .82em; height: .82em; border-radius: 50%; background: repeating-conic-gradient(#ffc15f 0 12deg, #ed772c 12deg 24deg); border: .09em solid #ffd88b; color: #143c70; font-style: normal; vertical-align: -.04em; }
 
       /* 两张新图都作为完整全屏场景使用，不再缩进卡片，也不会重复使用首页图 3。 */
-      .final-scene { position: absolute; inset: 0; z-index: 5; opacity: 0; transform: scale(1.035); animation: final-in .82s 2.9s cubic-bezier(.2,.72,.2,1) forwards; background: #17253b; }
-      .scene { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; }
-      .scene-main { z-index: 1; animation: scene-main-drift 18s ease-in-out infinite alternate; }
-      .scene-alt { z-index: 2; opacity: 0; animation: scene-alt-cycle 18s 7s ease-in-out infinite; }
-      .scene-shade { position: absolute; inset: 0; z-index: 3; background: linear-gradient(90deg, rgba(6,20,39,.68) 0%, rgba(6,20,39,.32) 42%, rgba(6,20,39,.06) 72%), linear-gradient(0deg, rgba(4,16,31,.4), transparent 58%); }
-      .copy { position: absolute; z-index: 4; left: clamp(28px, 8vw, 132px); top: 50%; width: min(42rem, 52vw); transform: translateY(-45%); text-shadow: 0 3px 18px rgba(0,0,0,.66); }
       .copy h2 { margin: 0; font-size: clamp(38px, 6vw, 82px); line-height: 1; letter-spacing: 0; }
       .copy .meow { margin: 16px 0 0; color: #ffd08b; font: 600 clamp(20px, 2.4vw, 34px)/1.4 Georgia, serif; }
       .copy .desc { max-width: 36rem; margin: 24px 0 0; color: rgba(255,255,255,.86); font-size: clamp(14px, 1.35vw, 18px); line-height: 1.85; }
@@ -67,7 +69,9 @@ const title = 'Till the Lands Become an Orange';
       @keyframes title-stage-in { to { opacity: 1; transform: translateY(0); } }
       @keyframes title-stage-out { to { opacity: 0; transform: translateY(-5%); } }
       @keyframes title-pop { to { transform: scale(1); } }
-      @keyframes final-in { to { opacity: 1; transform: scale(1); } }
+      @keyframes final-settle { to { transform: scale(1); } }
+      @keyframes scene-brighten { to { opacity: 1; } }
+      @keyframes copy-in { to { opacity: 1; transform: translateY(-45%); } }
       @keyframes scene-main-drift { from { transform: scale(1.015) translate3d(0, 0, 0); } to { transform: scale(1.055) translate3d(-1.2%, -.8%, 0); } }
       @keyframes scene-alt-cycle { 0%, 15% { opacity: 0; transform: scale(1.045); } 27%, 62% { opacity: 1; transform: scale(1); } 75%, 100% { opacity: 0; transform: scale(1.025); } }
 
@@ -84,10 +88,11 @@ const title = 'Till the Lands Become an Orange';
         .copy .desc { margin-top: 12px; font-size: 13px; line-height: 1.6; }
       }
       @media (prefers-reduced-motion: reduce) {
-        .sky-stage, .title-stage, .event-title, .final-scene, .scene { animation: none; }
+        .sky-stage, .title-stage, .event-title, .final-scene, .scene, .copy { animation: none; }
         .sky-stage { transform: none; filter: none; }
         .title-stage { display: none; }
         .final-scene { opacity: 1; transform: none; }
+        .copy { opacity: 1; transform: translateY(-45%); }
       }
     </style>
   </head>
