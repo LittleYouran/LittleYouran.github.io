@@ -25,9 +25,9 @@ export interface HeroOptions {
   gifSrc: string;
   /** 格里德利小 GIF URL（鼠标跟随用） */
   followGifSrc?: string;
-  /** 贴纸墙 URL 数组（已抠图的透明 PNG，15 张） */
+  /** 贴纸墙 URL 数组（已抠图的透明 PNG） */
   stickers: string[];
-  /** 标题文字图 URL（大标题，如"直到此地变成一颗酸橙"） */
+  /** 标题文字图 URL（大标题，如"直到大地变成一颗酸橙"） */
   titleSrc?: string;
   /** 标题装饰角色图 URL（翘腿角色，放在标题上面） */
   titleDecoSrc?: string;
@@ -151,23 +151,24 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   // v6: 网格 + 抖动分散布局，避免集中/重叠
   function layoutStickers() {
     const n = stickerEls.length;
-    const cols = Math.ceil(Math.sqrt(n * width / Math.max(height, 1)));
+    const cols = width > height ? 5 : 3;
     const rows = Math.ceil(n / cols);
     const cellW = width / cols;
     const cellH = height / rows;
     for (let i = 0; i < n; i++) {
       const img = stickerEls[i];
-      // 网格位置 + 格内抖动（±20% 格宽）
+      // 固定网格加小幅抖动，避免角色堆在标题附近。
       const gx = i % cols;
       const gy = Math.floor(i / cols);
-      const jx = (Math.random() - 0.5) * cellW * 0.4;
-      const jy = (Math.random() - 0.5) * cellH * 0.4;
-      const size = Math.min(width, height) * (0.12 + Math.random() * 0.1); // 12% ~ 22% 视口
+      const jx = (Math.random() - 0.5) * cellW * 0.16;
+      const jy = (Math.random() - 0.5) * cellH * 0.16;
+      const size = Math.min(width, height) * (0.09 + Math.random() * 0.07);
       const x = gx * cellW + cellW * 0.5 - size / 2 + jx;
       const y = gy * cellH + cellH * 0.5 - size / 2 + jy;
       const rot = (Math.random() - 0.5) * 18; // -9° ~ 9°
-      const z = Math.random() > 0.42 ? 3 : 1; // 部分在亚克力之上，部分在之下
-      img.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:auto;z-index:${z};transform:rotate(${rot}deg);opacity:0;`;
+      const z = i % 3 === 0 ? 3 : 1;
+      const rightAccent = i === n - 1;
+      img.style.cssText = `left:${rightAccent ? width - size * 1.18 : x}px;top:${rightAccent ? height * 0.38 : y}px;width:${size}px;height:auto;z-index:${z};transform:rotate(${rightAccent ? -6 : rot}deg);opacity:0;`;
     }
   }
 
@@ -305,14 +306,14 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
     },
     CHARGE: {
       enter() {
-        // v6: 入场角色从中间偏左出发，加速向右冲刺
+        // 入场角色从中间偏左立刻向右冲刺。
         runner.style.width = `${runnerSize}px`;
         runner.style.height = `${runnerSize}px`;
         runner.style.opacity = '1';
         runner.style.transform = `translate(${width * 0.25 - runnerSize / 2}px, ${height / 2 - runnerSize / 2}px)`;
       },
       update() {
-        const t = Math.min(1, sm.time / 950);
+        const t = Math.min(1, sm.time / 820);
         const ease = t * t * t;
         const x = width * 0.25 - runnerSize / 2 + (width * 0.75) * ease;
         runner.style.transform = `translate(${x}px, ${height / 2 - runnerSize / 2}px)`;
@@ -395,7 +396,8 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
       },
       update() {
         const t = Math.min(1, sm.time / 900);
-        setWaveClip(bg, 100 - t * 100);
+        // 不裁切 bg 本身，否则会把未铺满的区域变成黑色。
+        // 这一段只让残余粒子自然消散，背板和贴纸已经完整显示。
         for (const p of boomParticles) {
           p.x += p.vx;
           p.y += p.vy;
@@ -438,10 +440,10 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
           const targetX = mouseX - followSize / 2;
           const targetY = mouseY - followSize / 2;
           // v6: 更跟手：加速度更大、阻尼更小
-          followVX += (targetX - followX) * 0.16;
-          followVY += (targetY - followY) * 0.16;
-          followVX *= 0.86;
-          followVY *= 0.86;
+          followVX += (targetX - followX) * 0.22;
+          followVY += (targetY - followY) * 0.22;
+          followVX *= 0.78;
+          followVY *= 0.78;
           followX += followVX;
           followY += followVY;
           follow.style.transform = `translate(${followX}px, ${followY}px)`;

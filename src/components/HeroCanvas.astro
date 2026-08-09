@@ -11,13 +11,13 @@
 //   stickerCount: 贴纸数量（默认 15）
 //   followSize:   跟随小角色尺寸 px（默认 96）
 const {
-  stickerBase = '/hero/v6/',
-  gifSrc = '/hero/v6/gridley-run.gif',
-  followGifSrc = '/hero/v6/gridley-tiny-clean.gif',
-  titleSrc = '/hero/v6/9F1DF0.png',
-  titleDecoSrc = '/hero/v6/deco.png',
-  stickerCount = 10,
-  followSize = 96,
+  stickerBase = '/hero/v7/',
+  gifSrc = '/hero/v7/runner-clean.gif',
+  followGifSrc = '/hero/v7/runner-clean.gif',
+  titleSrc = '/hero/v7/title.png',
+  titleDecoSrc = '/hero/v7/deco.png',
+  stickerCount = 12,
+  followSize = 82,
 } = Astro.props;
 
 const stickers = Array.from(
@@ -107,11 +107,11 @@ const stickers = Array.from(
     transition: opacity 0.25s;
   }
   /* 大标题：浮在贴纸墙上，顶部居中 */
-  .hero-title {
+   .hero-title {
     position: absolute;
     left: 50%;
-    top: 4%;
-    transform: translateX(-50%);
+     top: 50%;
+     transform: translate(-50%, -50%);
     z-index: 7;
     display: flex;
     flex-direction: column;
@@ -171,13 +171,6 @@ const stickers = Array.from(
     const titleDeco = el.dataset.titleDeco || '';
     const followSize = Number(el.dataset.followSize) || 96;
 
-    // 手机竖屏提示（纯 CSS 覆盖层，JS 不管）
-    if (window.matchMedia('(max-width: 768px) and (orientation: portrait)').matches) {
-      const tip = document.createElement('div');
-      tip.className = 'hero-rotate-tip';
-      tip.textContent = '请横屏浏览体验更佳';
-      el.appendChild(tip);
-    }
 
     initHero(el, {
       gifSrc: gif,

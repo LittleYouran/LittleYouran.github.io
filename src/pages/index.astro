@@ -39,7 +39,12 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         backdrop-filter: blur(10px);
         border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       }
-      .site-header .logo { font-weight: 700; letter-spacing: 2px; }
+      .site-header .logo {
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #fff6e7;
+        text-shadow: 0 2px 14px rgba(255, 130, 80, 0.45);
+      }
       .site-header nav a {
         color: rgba(255, 255, 255, 0.75);
         text-decoration: none;
@@ -68,7 +73,7 @@ import HeroCanvas from '../components/HeroCanvas.astro';
       .hero-overlay {
         position: absolute;
         left: 50%;
-        bottom: 10%;
+        bottom: 7%;
         top: auto;
         transform: translateX(-50%);
         z-index: 11;
@@ -140,7 +145,7 @@ import HeroCanvas from '../components/HeroCanvas.astro';
       .page2-bg {
         position: absolute;
         inset: 0;
-        background-image: url('/hero/v6/big-bg.png');
+         background-image: url('/hero/v7/intro-bg.png');
         background-size: cover;
         background-position: center;
         z-index: 0;
@@ -193,20 +198,11 @@ import HeroCanvas from '../components/HeroCanvas.astro';
 
       <!-- 首屏占位：文字内容在正常流中，滚动时只有文字上去 -->
       <div class="hero-pad">
-        <div class="hero-overlay">
-          <a class="next-btn" href="#page2">前往下一页 ↓</a>
+         <div class="hero-overlay">
+           <a class="next-btn" href="/intro">前往下一页 <span aria-hidden="true">→</span></a>
         </div>
       </div>
 
-      <!-- 第二页：大背景图 + 介绍 -->
-      <section class="page2" id="page2">
-        <div class="page2-bg"></div>
-        <div class="page2-content" id="page2-content">
-          <h2>你好，我是 youran</h2>
-          <p>Linux 折腾 · 内核编译 · AI 机器人 · 游戏</p>
-          <p>这里是我的技术折腾记录，主要写 Linux 桌面、内核编译、AI 应用和游戏相关的内容。</p>
-        </div>
-      </section>
 
       <section class="posts" id="posts">
         <h2>最近文章</h2>
@@ -219,22 +215,6 @@ import HeroCanvas from '../components/HeroCanvas.astro';
       </section>
     </main>
     <script>
-      // 滚动到第二页时淡入介绍内容
-      const page2Content = document.getElementById('page2-content');
-      if (page2Content) {
-        const io = new IntersectionObserver(
-          (entries) => {
-            entries.forEach((entry) => {
-              if (entry.isIntersecting) {
-                page2Content.classList.add('visible');
-                io.disconnect();
-              }
-            });
-          },
-          { threshold: 0.3 },
-        );
-        io.observe(page2Content);
-      }
     </script>
   </body>
 </html>
