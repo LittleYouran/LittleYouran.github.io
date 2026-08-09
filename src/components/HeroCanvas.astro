@@ -1,26 +1,31 @@
 ---
-// HeroCanvas.astro — 全屏粒子角色 hero 组件（v2）
+// HeroCanvas.astro — 全屏粒子角色 hero 组件（v4）
 // 用法：
 //   <HeroCanvas />
 // 可选 props：
-//   bgSrc:     背景采样图 URL（默认 /hero/bg.png，透明角色大图）
-//   followSrc: 跟随小角色图 URL（默认 /hero/follow.png，透明角色小图）
-//   gridSize:  粒子网格步长 px（默认 12）
-//   followSize: 跟随小角色尺寸 px（默认 110）
+//   stickerBase: 贴纸目录 URL（默认 /hero/v4/，自动找 sticker-1..15.png）
+//   gifSrc:      格里德利 GIF URL（默认 /hero/v4/hero.gif）
+//   stickerCount: 贴纸数量（默认 15）
+//   followSize:   跟随小角色尺寸 px（默认 90）
 const {
-  bgSrc = '/hero/bg.png',
-  followSrc = '/hero/follow.png',
-  gridSize = 12,
-  followSize = 110,
+  stickerBase = '/hero/v4/',
+  gifSrc = '/hero/v4/hero.gif',
+  stickerCount = 15,
+  followSize = 90,
 } = Astro.props;
+
+const stickers = Array.from(
+  { length: stickerCount },
+  (_, i) => `${stickerBase}sticker-${i + 1}.png`,
+);
 ---
 
 <div
   class="hero-wrap"
-  data-bg={bgSrc}
-  data-follow={followSrc}
-  data-grid-size={gridSize}
+  data-gif={gifSrc}
+  data-stickers={stickers.join(',')}
   data-follow-size={followSize}
+  aria-hidden="true"
 ></div>
 
 <style is:global>
@@ -30,41 +35,68 @@ const {
     height: 100dvh;
     min-height: 480px;
     overflow: hidden;
-    /* 亚克力磨砂背板 */
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0) 28%),
-      rgba(13, 10, 22, 0.38);
-    backdrop-filter: blur(16px) saturate(1.25) brightness(0.92);
-    -webkit-backdrop-filter: blur(16px) saturate(1.25) brightness(0.92);
+      radial-gradient(ellipse at 50% 40%, rgba(70, 55, 110, 0.5) 0%, rgba(35, 28, 60, 0.65) 60%, rgba(16, 12, 30, 0.85) 100%);
+  }
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+      radial-gradient(ellipse at 50% 40%, rgba(70, 55, 110, 0.5) 0%, rgba(35, 28, 60, 0.65) 60%, rgba(16, 12, 30, 0.85) 100%);
+    transition: opacity 0.2s;
+  }
+  .hero-sticker {
+    position: absolute;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .hero-acrylic {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background:
+      linear-gradient(115deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 35%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 40%);
+    backdrop-filter: blur(2px) saturate(1.1);
+    -webkit-backdrop-filter: blur(2px) saturate(1.1);
+    mix-blend-mode: screen;
+    opacity: 0.5;
   }
   .hero-canvas {
     position: absolute;
     inset: 0;
+    z-index: 4;
     pointer-events: none;
+  }
+  .hero-runner {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 5;
+    pointer-events: none;
+    will-change: transform;
+    user-select: none;
+    filter: drop-shadow(0 10px 24px rgba(255, 120, 60, 0.35));
   }
   .hero-follow {
     position: absolute;
     left: 0;
     top: 0;
+    z-index: 6;
     pointer-events: none;
-    will-change: transform;
+    will-change: transform, opacity;
     user-select: none;
-    opacity: 0;
-    z-index: 3;
-  }
-  .hero-fallback {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    pointer-events: none;
-    z-index: 1;
+    filter: drop-shadow(0 4px 14px rgba(255, 120, 60, 0.4));
+    transition: opacity 0.25s;
   }
   .hero-rotate-tip {
     position: absolute;
     inset: 0;
-    z-index: 6;
+    z-index: 8;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -75,6 +107,13 @@ const {
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
   }
+  /* 手机竖屏：提示横屏 */
+  @media (max-width: 768px) and (orientation: portrait) {
+    .hero-wrap {
+      height: 100dvh;
+      min-height: 100dvh;
+    }
+  }
 </style>
 
 <script>
@@ -82,11 +121,18 @@ const {
 
   const el = document.querySelector('.hero-wrap');
   if (el) {
-    initHero(el, {
-      bgSrc: el.dataset.bg || '/hero/bg.png',
-      followSrc: el.dataset.follow || '/hero/follow.png',
-      gridSize: Number(el.dataset.gridSize) || 12,
-      followSize: Number(el.dataset.followSize) || 110,
-    });
+    const gif = el.dataset.gif || '/hero/v4/hero.gif';
+    const stickers = (el.dataset.stickers || '').split(',').filter(Boolean);
+    const followSize = Number(el.dataset.followSize) || 90;
+
+    // 手机竖屏提示（纯 CSS 覆盖层，JS 不管）
+    if (window.matchMedia('(max-width: 768px) and (orientation: portrait)').matches) {
+      const tip = document.createElement('div');
+      tip.className = 'hero-rotate-tip';
+      tip.textContent = '请横屏浏览体验更佳';
+      el.appendChild(tip);
+    }
+
+    initHero(el, { gifSrc: gif, stickers, followSize });
   }
 </script>

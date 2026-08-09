@@ -6,11 +6,10 @@
  */
 
 export type HeroState =
-  | 'SLIDE_IN'
-  | 'BURST'
-  | 'REASSEMBLE'
-  | 'GIF_FADE_IN'
-  | 'FOLLOW';
+  | 'CHARGE'
+  | 'CRASH'
+  | 'WAVE'
+  | 'SETTLE';
 
 export interface StateHandlers {
   enter?: () => void;
@@ -19,12 +18,14 @@ export interface StateHandlers {
 }
 
 export class StateMachine {
-  private current: HeroState = 'SLIDE_IN';
+  private current: HeroState;
   private handlers: Record<HeroState, StateHandlers>;
   private elapsed = 0;
 
-  constructor(handlers: Record<HeroState, StateHandlers>) {
+  constructor(handlers: Record<HeroState, StateHandlers>, initial: HeroState = 'CHARGE') {
     this.handlers = handlers;
+    this.current = initial;
+    this.handlers[this.current]?.enter?.();
   }
 
   get state(): HeroState {
