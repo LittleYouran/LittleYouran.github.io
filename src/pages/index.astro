@@ -1,0 +1,104 @@
+---
+// 首页
+import HeroCanvas from '../components/HeroCanvas.astro';
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>youran 的博客</title>
+    <meta name="description" content="技术折腾记录：Linux 桌面、内核编译、AI、游戏" />
+    <style>
+      :root {
+        --bg-0: #0d0a16;
+        --bg-1: #171226;
+        --fg: #eee;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        background: radial-gradient(ellipse at 50% 30%, #2a2140 0%, var(--bg-1) 60%, var(--bg-0) 100%);
+        color: var(--fg);
+        font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+        min-height: 100vh;
+      }
+      .site-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 32px;
+        background: rgba(13, 10, 22, 0.55);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .site-header .logo { font-weight: 700; letter-spacing: 2px; }
+      .site-header nav a {
+        color: rgba(255, 255, 255, 0.75);
+        text-decoration: none;
+        margin-left: 24px;
+        font-size: 14px;
+        transition: color 0.2s;
+      }
+      .site-header nav a:hover { color: #fff; }
+      main .hero-section { position: relative; }
+      .hero-overlay {
+        position: absolute;
+        left: 32px;
+        bottom: 40px;
+        z-index: 5;
+        pointer-events: none;
+      }
+      .hero-overlay h1 { font-size: 28px; letter-spacing: 2px; text-shadow: 0 2px 16px rgba(0,0,0,0.7); }
+      .hero-overlay p { margin-top: 6px; font-size: 14px; opacity: 0.75; }
+      .content {
+        max-width: 860px;
+        margin: 64px auto;
+        padding: 0 24px;
+      }
+      .content h2 {
+        font-size: 22px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      }
+      .content p { line-height: 1.9; opacity: 0.85; margin-bottom: 16px; }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="logo">youran.dev</div>
+      <nav>
+        <a href="/">首页</a>
+        <a href="#posts">文章</a>
+        <a href="#about">关于</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero-section">
+        <HeroCanvas />
+        <div class="hero-overlay">
+          <h1>你好，我是 youran</h1>
+          <p>Linux 折腾 · 内核编译 · AI 机器人 · 游戏</p>
+        </div>
+      </section>
+
+      <section class="content" id="posts">
+        <h2>最近文章</h2>
+        <p>博客搭建中，敬请期待。</p>
+      </section>
+
+      <section class="content" id="about">
+        <h2>关于</h2>
+        <p>这里是 youran 的技术折腾记录，主要写 Linux 桌面、内核编译、AI 应用和游戏相关的内容。</p>
+      </section>
+    </main>
+  </body>
+</html>

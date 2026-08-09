@@ -1,0 +1,57 @@
+---
+// HeroCanvas.astro — 粒子角色 hero 组件
+// 用法：
+//   <HeroCanvas />
+// 可选 props：
+//   sampleSrc: 采样图 URL（默认 /hero/sample.png）
+//   gifSrc:    原 GIF URL（默认 /hero/hero.gif）
+//   maxParticles: 目标粒子数（默认 8000）
+const {
+  sampleSrc = '/hero/sample.png',
+  gifSrc = '/hero/hero.gif',
+  maxParticles = 8000,
+} = Astro.props;
+---
+
+<div
+  class="hero-wrap"
+  data-sample={sampleSrc}
+  data-gif={gifSrc}
+  data-max-particles={maxParticles}
+></div>
+
+<style is:global>
+  .hero-wrap {
+    position: relative;
+    width: 100%;
+    height: 72vh;
+    min-height: 480px;
+    overflow: hidden;
+  }
+  .hero-canvas {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .hero-gif {
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    will-change: transform;
+    user-select: none;
+  }
+</style>
+
+<script>
+  import { initHero } from '../lib/hero';
+
+  const el = document.querySelector('.hero-wrap');
+  if (el) {
+    initHero(el, {
+      sampleSrc: el.dataset.sample || '/hero/sample.png',
+      gifSrc: el.dataset.gif || '/hero/hero.gif',
+      maxParticles: Number(el.dataset.maxParticles) || 8000,
+    });
+  }
+</script>
