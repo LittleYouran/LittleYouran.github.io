@@ -171,9 +171,9 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
       const x = gx * cellW + cellW * 0.5 - size / 2 + jx;
       const y = gy * cellH + cellH * 0.5 - size / 2 + jy;
       const rot = ((i * 11) % 17) - 8;
-      const z = i % 3 === 0 ? 3 : 1;
-      // Source image 15 is sticker-11 and stays as the right-side accent.
-      const rightAccent = i === 10;
+      const z = i % 3 === 0 ? 12 : 8;
+      // Source image 15 remains the right-side accent after sticker-3 is removed.
+      const rightAccent = i === 9;
       img.style.cssText = `left:${rightAccent ? width - size * 1.18 : x}px;top:${rightAccent ? height * 0.38 : y}px;width:${size}px;height:auto;z-index:${z};transform:rotate(${rightAccent ? -6 : rot}deg);opacity:0;`;
     }
   }
@@ -358,13 +358,13 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
     },
     TSUNAMI: {
       enter() {
-        // First reveal: the full-screen acrylic sheet rolls in from the impact.
+        // 背板本体立即成为完整全屏层；波浪只表达揭幕边缘，避免裁切残留露出黑块。
         acrylic.style.opacity = '1';
+        clearClip(acrylic);
       },
       update() {
         const t = Math.min(1, sm.time / 920);
         const edge = 102 - t * 104;
-        setWaveClip(acrylic, edge);
         positionWave(edge, Math.sin(t * Math.PI) * 0.9);
         // 爆炸粒子继续飞散
         for (const p of boomParticles) {

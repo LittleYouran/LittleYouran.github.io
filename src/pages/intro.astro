@@ -3,65 +3,113 @@ const title = 'Till the Lands Become an Orange';
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><circle cx=%2232%22 cy=%2232%22 r=%2228%22 fill=%22%23f39a43%22/><path d=%22M14 32h36M32 14c8 8 8 28 0 36M32 14c-8 8-8 28 0 36%22 stroke=%22%23ffd98a%22 stroke-width=%223%22 fill=%22none%22/></svg>" />
     <title>{title}</title>
     <style>
-      :root { background: #081b3d; color: #f5f1e8; }
+      :root { background: #82c9ec; color: #fff; }
       * { box-sizing: border-box; }
-      html, body { margin: 0; min-height: 100%; }
-      body { overflow-x: hidden; font-family: Georgia, "Times New Roman", serif; }
-      .sky {
-        min-height: 100svh;
-        position: relative;
-        overflow: hidden;
-        background: linear-gradient(180deg, #9dd8f1 0%, #d8eff5 52%, #081b3d 52%, #081b3d 100%);
-        animation: rise 1.25s cubic-bezier(.18,.82,.22,1) both;
-      }
-      .final-scene {
+      html, body { margin: 0; width: 100%; min-height: 100%; }
+      body { overflow: hidden; font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+      .intro-page { position: relative; width: 100%; height: 100dvh; min-height: 480px; overflow: hidden; isolation: isolate; background: #82c9ec; }
+
+      /* 整屏天空，不再在中间硬切深蓝。 */
+      .sky-stage {
         position: absolute;
         inset: 0;
-        z-index: 5;
-        background: linear-gradient(rgba(10, 22, 42, .08), rgba(10, 22, 42, .28)), url('/hero/v8/intro-bg.webp') center / cover no-repeat;
+        z-index: 1;
+        overflow: hidden;
+        background: linear-gradient(180deg, #60b6e4 0%, #9fd9f1 48%, #e7f6fb 100%);
+        transform: translateY(102%);
+        filter: blur(10px);
+        animation: rise-sky 1.05s cubic-bezier(.18,.82,.22,1) forwards, sky-away .48s 1.38s ease-in forwards;
+      }
+      .cloud { position: absolute; left: -15%; width: 130%; border-radius: 50%; background: rgba(255,255,255,.46); filter: blur(30px); }
+      .cloud.one { top: 18%; height: 18%; transform: rotate(-4deg); }
+      .cloud.two { top: 48%; height: 13%; opacity: .62; transform: rotate(3deg); }
+      .cloud.three { top: 72%; height: 10%; opacity: .38; }
+
+      .title-stage {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        display: grid;
+        place-items: center;
+        background: #123c72;
         opacity: 0;
-        transform: scale(1.045);
-        animation: final-in 1.05s 3.05s cubic-bezier(.2,.72,.2,1) forwards;
+        transform: translateY(4%);
+        animation: title-stage-in .42s 1.2s ease-out forwards, title-stage-out .48s 2.65s ease-in forwards;
       }
-      .sky::before, .sky::after {
-        content: ""; position: absolute; left: -10%; width: 120%; height: 26vh;
-        background: rgba(255,255,255,.42); filter: blur(28px); border-radius: 50%;
-      }
-      .sky::before { top: 18%; transform: rotate(-4deg); }
-      .sky::after { top: 37%; transform: rotate(3deg); opacity: .55; }
-      .title {
-        position: absolute; inset: 52% 6% auto; text-align: center;
-        z-index: 4;
-        color: #f29a3d; opacity: 0; transform: scale(.92);
-        animation: title-in .72s 1.35s ease-out forwards, title-out .6s 2.75s ease-in forwards;
-        text-shadow: 0 4px 0 rgba(4,17,45,.28);
-      }
-      h1 { margin: 0; font-size: clamp(28px, 7vw, 76px); line-height: 1.05; font-style: italic; }
-      .orange-o { display: inline-grid; place-items: center; width: .82em; height: .82em; border-radius: 50%; background: #f48b30; color: #183568; font-style: normal; box-shadow: inset 0 0 0 .08em #ffd17a, inset 0 0 0 .18em #ec6c25; }
-      .back { position: absolute; z-index: 8; top: 24px; left: 28px; color: #fff; text-decoration: none; font: 600 14px system-ui, sans-serif; opacity: .82; text-shadow: 0 2px 8px rgba(0,0,0,.35); }
-      .intro { position: absolute; z-index: 7; inset: auto 0 5%; text-align: center; font: 15px/1.8 system-ui, sans-serif; color: rgba(255,255,255,.92); opacity: 0; text-shadow: 0 2px 12px rgba(0,0,0,.5); animation: title-in .7s 3.65s forwards; }
-      @keyframes rise { from { transform: translateY(100%); filter: blur(10px); } to { transform: translateY(0); filter: blur(0); } }
-      @keyframes title-in { to { opacity: 1; transform: scale(1); } }
-      @keyframes title-out { to { opacity: 0; transform: scale(1.04) translateY(-12px); } }
+      .event-title { position: relative; margin: 0 6vw; text-align: center; color: #f5a34c; transform: scale(.92); animation: title-pop .72s 1.35s cubic-bezier(.2,.8,.2,1) forwards; }
+      .event-title h1 { margin: 0; max-width: 1100px; font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: clamp(32px, 6.6vw, 86px); line-height: 1.05; letter-spacing: 0; text-shadow: 0 5px 0 rgba(4,17,45,.28); }
+      .event-title::before, .event-title::after { content: "✦"; position: absolute; top: 50%; color: #ffd691; font-size: clamp(20px, 3vw, 42px); transform: translateY(-50%); }
+      .event-title::before { left: -5vw; }
+      .event-title::after { right: -5vw; }
+      .orange-o { display: inline-grid; place-items: center; width: .82em; height: .82em; border-radius: 50%; background: repeating-conic-gradient(#ffc15f 0 12deg, #ed772c 12deg 24deg); border: .09em solid #ffd88b; color: #143c70; font-style: normal; vertical-align: -.04em; }
+
+      /* 两张新图都作为完整全屏场景使用，不再缩进卡片，也不会重复使用首页图 3。 */
+      .final-scene { position: absolute; inset: 0; z-index: 5; opacity: 0; transform: scale(1.035); animation: final-in .82s 2.9s cubic-bezier(.2,.72,.2,1) forwards; background: #17253b; }
+      .scene { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; }
+      .scene-main { z-index: 1; animation: scene-main-drift 18s ease-in-out infinite alternate; }
+      .scene-alt { z-index: 2; opacity: 0; animation: scene-alt-cycle 18s 7s ease-in-out infinite; }
+      .scene-shade { position: absolute; inset: 0; z-index: 3; background: linear-gradient(90deg, rgba(6,20,39,.68) 0%, rgba(6,20,39,.32) 42%, rgba(6,20,39,.06) 72%), linear-gradient(0deg, rgba(4,16,31,.4), transparent 58%); }
+      .copy { position: absolute; z-index: 4; left: clamp(28px, 8vw, 132px); top: 50%; width: min(42rem, 52vw); transform: translateY(-45%); text-shadow: 0 3px 18px rgba(0,0,0,.66); }
+      .copy h2 { margin: 0; font-size: clamp(38px, 6vw, 82px); line-height: 1; letter-spacing: 0; }
+      .copy .meow { margin: 16px 0 0; color: #ffd08b; font: 600 clamp(20px, 2.4vw, 34px)/1.4 Georgia, serif; }
+      .copy .desc { max-width: 36rem; margin: 24px 0 0; color: rgba(255,255,255,.86); font-size: clamp(14px, 1.35vw, 18px); line-height: 1.85; }
+      .back { position: absolute; z-index: 9; top: 24px; left: 28px; color: #fff; text-decoration: none; font-size: 14px; opacity: .84; text-shadow: 0 2px 8px rgba(0,0,0,.5); }
+
+      @keyframes rise-sky { to { transform: translateY(0); filter: blur(0); } }
+      @keyframes sky-away { to { opacity: 0; transform: translateY(-7%); } }
+      @keyframes title-stage-in { to { opacity: 1; transform: translateY(0); } }
+      @keyframes title-stage-out { to { opacity: 0; transform: translateY(-5%); } }
+      @keyframes title-pop { to { transform: scale(1); } }
       @keyframes final-in { to { opacity: 1; transform: scale(1); } }
-      @media (prefers-reduced-motion: reduce) { .sky, .title, .intro, .final-scene { animation: none; opacity: 1; transform: none; } }
+      @keyframes scene-main-drift { from { transform: scale(1.015) translate3d(0, 0, 0); } to { transform: scale(1.055) translate3d(-1.2%, -.8%, 0); } }
+      @keyframes scene-alt-cycle { 0%, 15% { opacity: 0; transform: scale(1.045); } 27%, 62% { opacity: 1; transform: scale(1); } 75%, 100% { opacity: 0; transform: scale(1.025); } }
+
+      @media (max-width: 720px) {
+        .copy { left: 24px; top: 38%; width: calc(100% - 48px); }
+        .copy .desc { max-width: 72%; }
+        .scene { object-position: 50% 50%; }
+      }
+      @media (orientation: landscape) and (max-height: 520px) {
+        .intro-page { min-height: 0; height: 100dvh; }
+        .copy { top: 52%; }
+        .copy h2 { font-size: clamp(32px, 7vh, 52px); }
+        .copy .meow { margin-top: 8px; }
+        .copy .desc { margin-top: 12px; font-size: 13px; line-height: 1.6; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .sky-stage, .title-stage, .event-title, .final-scene, .scene { animation: none; }
+        .sky-stage { transform: none; filter: none; }
+        .title-stage { display: none; }
+        .final-scene { opacity: 1; transform: none; }
+      }
     </style>
   </head>
   <body>
-    <main class="sky">
-      <a class="back" href="/">← back</a>
-      <section class="title" aria-label={title}>
-        <h1>Till the Lands Become an <span class="orange-o">O</span>range</h1>
+    <main class="intro-page">
+      <div class="sky-stage" aria-hidden="true">
+        <i class="cloud one"></i><i class="cloud two"></i><i class="cloud three"></i>
+      </div>
+      <section class="title-stage" aria-label={title}>
+        <div class="event-title"><h1>Till the Lands Become an <span class="orange-o">O</span>range</h1></div>
       </section>
-      <div class="final-scene" aria-hidden="true"></div>
-      <p class="intro">Linux · AI · Kernel · Games<br />youran 的技术折腾记录</p>
+      <section class="final-scene">
+        <img class="scene scene-main" src="/intro/v9/scene-a.webp" alt="黄昏旅途场景" />
+        <img class="scene scene-alt" src="/intro/v9/scene-b.webp" alt="另一段黄昏旅途场景" />
+        <div class="scene-shade" aria-hidden="true"></div>
+        <div class="copy">
+          <h2>这里是掌柜</h2>
+          <p class="meow">喵喵喵</p>
+          <p class="desc">记录 Linux、内核、AI 和游戏，也记录那些折腾到深夜才终于跑通的瞬间。这里没有标准答案，只有一路试出来的经验。</p>
+        </div>
+      </section>
+      <a class="back" href="/">返回首页</a>
     </main>
   </body>
 </html>

@@ -3,27 +3,24 @@
 // 用法：
 //   <HeroCanvas />
 // 可选 props：
-//   stickerBase: 贴纸目录 URL（自动找 sticker-1..12.png）
+//   stickerBase: 贴纸目录 URL
 //   gifSrc:      入场 GIF URL
 //   followGifSrc:鼠标跟随 GIF URL
 //   titleSrc:    大标题文字图 URL
 //   titleDecoSrc:标题装饰角色图 URL
-//   stickerCount: 贴纸数量（默认 12）
-//   followSize:   跟随小角色尺寸 px（默认 96）
+//   followSize:   跟随小角色尺寸 px（默认 82）
 const {
   stickerBase = '/hero/v8/',
   gifSrc = '/hero/v8/runner.webp',
   followGifSrc = '/hero/v8/runner.webp',
   titleSrc = '/hero/v8/title.webp',
   titleDecoSrc = '/hero/v8/deco.webp',
-  stickerCount = 12,
   followSize = 82,
 } = Astro.props;
 
-const stickers = Array.from(
-  { length: stickerCount },
-  (_, i) => `${stickerBase}sticker-${i + 1}.webp`,
-);
+// sticker-3 是标题/星芒素材，不应再作为角色贴纸重复展示。
+const stickerIds = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+const stickers = stickerIds.map((id) => `${stickerBase}sticker-${id}.webp`);
 ---
 
 <div
@@ -76,17 +73,17 @@ const stickers = Array.from(
     z-index: 10;
     pointer-events: none;
     background:
-      linear-gradient(118deg, rgba(255, 255, 255, 0.36) 0%, rgba(216, 236, 248, 0.1) 31%, rgba(255, 255, 255, 0.24) 68%, rgba(183, 214, 231, 0.1) 100%),
-      linear-gradient(90deg, rgba(207, 229, 241, 0.2), rgba(255, 255, 255, 0.09) 50%, rgba(178, 211, 229, 0.2)),
-      rgba(179, 205, 221, 0.22);
-    border: 1px solid rgba(255, 255, 255, 0.46);
+      linear-gradient(118deg, rgba(255, 255, 255, 0.48) 0%, rgba(202, 231, 246, 0.18) 31%, rgba(255, 255, 255, 0.32) 68%, rgba(164, 207, 231, 0.17) 100%),
+      linear-gradient(90deg, rgba(207, 233, 248, 0.28), rgba(255, 255, 255, 0.13) 50%, rgba(166, 211, 235, 0.28)),
+      rgba(173, 208, 229, 0.36);
+    border: 2px solid rgba(255, 255, 255, 0.54);
     box-shadow:
       inset 0 2px 0 rgba(255, 255, 255, 0.48),
       inset 0 -2px 0 rgba(120, 169, 196, 0.2),
-      inset 28px 0 70px rgba(255, 255, 255, 0.05),
+      inset 28px 0 70px rgba(255, 255, 255, 0.12),
       0 24px 80px rgba(4, 2, 12, 0.28);
-    backdrop-filter: blur(11px) saturate(1.42) contrast(1.04);
-    -webkit-backdrop-filter: blur(11px) saturate(1.42) contrast(1.04);
+    backdrop-filter: blur(18px) saturate(1.38) contrast(1.04);
+    -webkit-backdrop-filter: blur(18px) saturate(1.38) contrast(1.04);
     opacity: 0;
   }
   .hero-acrylic::before,
@@ -97,11 +94,10 @@ const stickers = Array.from(
     pointer-events: none;
   }
   .hero-acrylic::before {
-    opacity: 0.9;
+    opacity: 1;
     background:
-      repeating-linear-gradient(90deg, rgba(255,255,255,.24) 0 1px, rgba(112,160,188,.08) 1px 2px, transparent 2px 12.5vw),
-      repeating-linear-gradient(0deg, rgba(218,239,250,.2) 0 1px, rgba(96,143,171,.06) 1px 2px, transparent 2px 12.5vh);
-    mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+      repeating-linear-gradient(90deg, rgba(255,255,255,.58) 0 2px, rgba(66,126,161,.2) 2px 4px, transparent 4px calc(100vw / 6)),
+      repeating-linear-gradient(0deg, rgba(236,249,255,.48) 0 2px, rgba(64,122,155,.16) 2px 4px, transparent 4px 20vh);
   }
   .hero-acrylic::after {
     background:
@@ -114,13 +110,14 @@ const stickers = Array.from(
   .hero-sticker-layer {
     position: absolute;
     inset: 0;
-    z-index: 3;
+    z-index: 11;
     opacity: 0;
   }
   .hero-sticker {
     position: absolute;
     object-fit: contain;
     filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
+    mix-blend-mode: normal;
     transition: opacity 0.3s;
     pointer-events: none;
   }
@@ -158,7 +155,7 @@ const stickers = Array.from(
     left: 50%;
     top: 48%;
     transform: translate(-50%, -50%);
-    z-index: 7;
+    z-index: 13;
     display: flex;
     flex-direction: column;
     align-items: center;
