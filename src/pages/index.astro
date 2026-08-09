@@ -17,6 +17,16 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         --bg-1: #171226;
         --fg: #eee;
       }
+      @keyframes page-lift-off {
+        0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); opacity: 1; }
+        55% { transform: translate3d(0, -18%, 0) rotate(-2deg) scale(1.035); opacity: 1; }
+        100% { transform: translate3d(0, -112%, 0) rotate(-7deg) scale(1.08); opacity: 0; }
+      }
+      @keyframes sky-wash {
+        0% { opacity: 0; transform: translateY(100%); }
+        55% { opacity: .5; transform: translateY(22%); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html { scroll-behavior: smooth; }
       body {
@@ -25,6 +35,21 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
         min-height: 100vh;
         overflow: hidden;
+      }
+      body.page-leaving .hero-wrap,
+      body.page-leaving .site-header,
+      body.page-leaving .hero-pad {
+        animation: page-lift-off 1.05s cubic-bezier(.18,.78,.2,1) forwards;
+        transform-origin: 50% 100%;
+      }
+      body.page-leaving::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        pointer-events: none;
+        background: linear-gradient(180deg, rgba(111, 190, 230, 0) 0%, rgba(179, 226, 245, .9) 100%);
+        animation: sky-wash 1.05s ease-out forwards;
       }
       /* Quiet floating navigation, without the previous black strip. */
       .site-header {
@@ -140,5 +165,14 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         </div>
       </div>
     </main>
+    <script>
+      const next = document.querySelector('.next-btn');
+      next?.addEventListener('click', (event) => {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        event.preventDefault();
+        document.body.classList.add('page-leaving');
+        window.setTimeout(() => { window.location.href = next.href; }, 920);
+      });
+    </script>
   </body>
 </html>

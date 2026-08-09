@@ -155,7 +155,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   // Stable grid layout keeps every character readable and away from the title.
   function layoutStickers() {
     const n = stickerEls.length;
-    const cols = width > height ? 5 : 3;
+    const cols = width > height ? 6 : 4;
     const rows = Math.ceil(n / cols);
     const cellW = width / cols;
     const cellH = height / rows;
@@ -167,14 +167,20 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
       const phase = (i * 2.399963229728653) % 1;
       const jx = (phase - 0.5) * cellW * 0.18;
       const jy = (((i * 7) % 11) / 10 - 0.5) * cellH * 0.14;
-      const size = Math.min(width, height) * (0.105 + (i % 4) * 0.012);
+      const size = Math.min(width, height) * (0.085 + (i % 4) * 0.009);
       const x = gx * cellW + cellW * 0.5 - size / 2 + jx;
       const y = gy * cellH + cellH * 0.5 - size / 2 + jy;
+      // 中央标题区留白，角色向四周排，不再挤成一团。
+      const centerX = x + size / 2;
+      const centerY = y + size / 2;
+      const inTitleSafeZone = centerX > width * 0.25 && centerX < width * 0.75 && centerY > height * 0.31 && centerY < height * 0.69;
+      const spreadX = inTitleSafeZone ? (centerX < width / 2 ? -cellW * 0.62 : cellW * 0.62) : 0;
+      const spreadY = inTitleSafeZone ? (centerY < height / 2 ? -cellH * 0.38 : cellH * 0.38) : 0;
       const rot = ((i * 11) % 17) - 8;
       const z = i % 3 === 0 ? 12 : 8;
       // Source image 15 remains the right-side accent after sticker-3 is removed.
       const rightAccent = i === 9;
-      img.style.cssText = `left:${rightAccent ? width - size * 1.18 : x}px;top:${rightAccent ? height * 0.38 : y}px;width:${size}px;height:auto;z-index:${z};transform:rotate(${rightAccent ? -6 : rot}deg);opacity:0;`;
+      img.style.cssText = `left:${rightAccent ? width - size * 1.18 : x + spreadX}px;top:${rightAccent ? height * 0.38 : y + spreadY}px;width:${size}px;height:auto;z-index:${z};transform:rotate(${rightAccent ? -6 : rot}deg);opacity:0;`;
     }
   }
 
@@ -200,6 +206,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   let followY = 0;
   let followVX = 0;
   let followVY = 0;
+  let followAngle = 0;
   let followVisible = false;
 
   // ---------- 波浪工具 ----------
@@ -459,7 +466,14 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
           followVY *= 0.68;
           followX += followVX;
           followY += followVY;
-          follow.style.transform = `translate(${followX}px, ${followY}px)`;
+          const speed = Math.hypot(followVX, followVY);
+          if (speed > 0.12) {
+            const targetAngle = Math.atan2(followVY, followVX) * 180 / Math.PI;
+            let delta = targetAngle - followAngle;
+            delta = ((delta + 180) % 360) - 180;
+            followAngle += delta * 0.18;
+          }
+          follow.style.transform = `translate(${followX}px, ${followY}px) rotate(${followAngle.toFixed(2)}deg)`;
           if (performance.now() - lastMove < 600) {
             spawnTrail(followX + followSize / 2, followY + followSize / 2);
           }
