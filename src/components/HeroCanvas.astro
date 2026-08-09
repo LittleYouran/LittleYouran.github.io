@@ -1,17 +1,23 @@
 ---
-// HeroCanvas.astro — 全屏粒子角色 hero 组件（v4）
+// HeroCanvas.astro — 全屏粒子角色 hero 组件（v5）
 // 用法：
 //   <HeroCanvas />
 // 可选 props：
-//   stickerBase: 贴纸目录 URL（默认 /hero/v4/，自动找 sticker-1..15.png）
-//   gifSrc:      格里德利 GIF URL（默认 /hero/v4/hero.gif）
+//   stickerBase: 贴纸目录 URL（默认 /hero/v5/，自动找 sticker-1..15.png）
+//   gifSrc:      格里德利 GIF URL（默认 /hero/v5/gridley-clean.gif）
+//   followGifSrc:跟随小 GIF URL（默认 /hero/v5/gridley-tiny-clean.gif）
+//   titleSrc:    大标题文字图 URL
+//   titleDecoSrc:标题装饰角色图 URL
 //   stickerCount: 贴纸数量（默认 15）
-//   followSize:   跟随小角色尺寸 px（默认 90）
+//   followSize:   跟随小角色尺寸 px（默认 96）
 const {
-  stickerBase = '/hero/v4/',
-  gifSrc = '/hero/v4/hero.gif',
-  stickerCount = 15,
-  followSize = 90,
+  stickerBase = '/hero/v5/',
+  gifSrc = '/hero/v5/gridley-clean.gif',
+  followGifSrc = '/hero/v5/gridley-tiny-clean.gif',
+  titleSrc = '/hero/v5/title.png',
+  titleDecoSrc = '/hero/v5/deco.png',
+  stickerCount = 13,
+  followSize = 96,
 } = Astro.props;
 
 const stickers = Array.from(
@@ -23,35 +29,29 @@ const stickers = Array.from(
 <div
   class="hero-wrap"
   data-gif={gifSrc}
+  data-follow-gif={followGifSrc}
   data-stickers={stickers.join(',')}
+  data-title={titleSrc}
+  data-title-deco={titleDecoSrc}
   data-follow-size={followSize}
   aria-hidden="true"
 ></div>
 
 <style is:global>
+  /* 背景固定铺满全屏，不随滚动移动 */
   .hero-wrap {
-    position: relative;
-    width: 100%;
-    height: 100dvh;
-    min-height: 480px;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
     overflow: hidden;
-    background:
-      radial-gradient(ellipse at 50% 40%, rgba(70, 55, 110, 0.5) 0%, rgba(35, 28, 60, 0.65) 60%, rgba(16, 12, 30, 0.85) 100%);
+    background: #0d0a16;
   }
   .hero-bg {
     position: absolute;
     inset: 0;
     z-index: 1;
     background:
-      radial-gradient(ellipse at 50% 40%, rgba(70, 55, 110, 0.5) 0%, rgba(35, 28, 60, 0.65) 60%, rgba(16, 12, 30, 0.85) 100%);
-    transition: opacity 0.2s;
-  }
-  .hero-sticker {
-    position: absolute;
-    object-fit: contain;
-    filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
-    transition: opacity 0.3s;
-    pointer-events: none;
+      radial-gradient(ellipse at 50% 40%, rgba(70, 55, 110, 0.45) 0%, rgba(35, 28, 60, 0.6) 60%, rgba(16, 12, 30, 0.85) 100%);
   }
   .hero-acrylic {
     position: absolute;
@@ -59,12 +59,24 @@ const stickers = Array.from(
     z-index: 2;
     pointer-events: none;
     background:
-      linear-gradient(115deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 35%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 40%);
-    backdrop-filter: blur(2px) saturate(1.1);
-    -webkit-backdrop-filter: blur(2px) saturate(1.1);
-    mix-blend-mode: screen;
-    opacity: 0.5;
+      linear-gradient(115deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 35%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 40%);
+    backdrop-filter: blur(3px) saturate(1.15);
+    -webkit-backdrop-filter: blur(3px) saturate(1.15);
+    opacity: 0;
+  }
+  .hero-sticker-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    opacity: 0;
+  }
+  .hero-sticker {
+    position: absolute;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
+    transition: opacity 0.3s;
+    pointer-events: none;
   }
   .hero-canvas {
     position: absolute;
@@ -81,6 +93,7 @@ const stickers = Array.from(
     will-change: transform;
     user-select: none;
     filter: drop-shadow(0 10px 24px rgba(255, 120, 60, 0.35));
+    opacity: 0;
   }
   .hero-follow {
     position: absolute;
@@ -93,10 +106,38 @@ const stickers = Array.from(
     filter: drop-shadow(0 4px 14px rgba(255, 120, 60, 0.4));
     transition: opacity 0.25s;
   }
+  /* 大标题：浮在贴纸墙上，顶部居中 */
+  .hero-title {
+    position: absolute;
+    left: 50%;
+    top: 4%;
+    transform: translateX(-50%);
+    z-index: 7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    transition: opacity 0.9s ease;
+  }
+  .hero-title-img {
+    max-width: min(78vw, 780px);
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 8px 28px rgba(0, 0, 0, 0.65));
+  }
+  /* 翘腿角色装饰：放在标题上面 */
+  .hero-title-deco {
+    max-width: min(26vw, 260px);
+    width: 100%;
+    height: auto;
+    margin-bottom: -6%;
+    filter: drop-shadow(0 10px 30px rgba(255, 120, 60, 0.35));
+    z-index: 8;
+  }
   .hero-rotate-tip {
     position: absolute;
     inset: 0;
-    z-index: 8;
+    z-index: 9;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -111,7 +152,9 @@ const stickers = Array.from(
   @media (max-width: 768px) and (orientation: portrait) {
     .hero-wrap {
       height: 100dvh;
-      min-height: 100dvh;
+    }
+    .hero-title {
+      top: 2%;
     }
   }
 </style>
@@ -121,9 +164,12 @@ const stickers = Array.from(
 
   const el = document.querySelector('.hero-wrap');
   if (el) {
-    const gif = el.dataset.gif || '/hero/v4/hero.gif';
+    const gif = el.dataset.gif || '/hero/v5/gridley-clean.gif';
+    const followGif = el.dataset.followGif || '/hero/v5/gridley-tiny-clean.gif';
     const stickers = (el.dataset.stickers || '').split(',').filter(Boolean);
-    const followSize = Number(el.dataset.followSize) || 90;
+    const title = el.dataset.title || '';
+    const titleDeco = el.dataset.titleDeco || '';
+    const followSize = Number(el.dataset.followSize) || 96;
 
     // 手机竖屏提示（纯 CSS 覆盖层，JS 不管）
     if (window.matchMedia('(max-width: 768px) and (orientation: portrait)').matches) {
@@ -133,6 +179,17 @@ const stickers = Array.from(
       el.appendChild(tip);
     }
 
-    initHero(el, { gifSrc: gif, stickers, followSize });
+    initHero(el, {
+      gifSrc: gif,
+      followGifSrc: followGif,
+      stickers,
+      titleSrc: title,
+      titleDecoSrc: titleDeco,
+      followSize,
+      onTitleReady: () => {
+        // 通知页面：标题已浮现，可以淡入正文内容
+        document.querySelector('.hero-overlay')?.classList.add('show');
+      },
+    });
   }
 </script>

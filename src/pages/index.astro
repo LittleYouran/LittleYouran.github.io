@@ -19,11 +19,12 @@ import HeroCanvas from '../components/HeroCanvas.astro';
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html { scroll-behavior: smooth; }
       body {
-        background: radial-gradient(ellipse at 50% 30%, #2a2140 0%, var(--bg-1) 60%, var(--bg-0) 100%);
+        background: var(--bg-0);
         color: var(--fg);
         font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
         min-height: 100vh;
       }
+      /* 顶部导航：浮在最上层 */
       .site-header {
         position: fixed;
         top: 0;
@@ -47,28 +48,62 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         transition: color 0.2s;
       }
       .site-header nav a:hover { color: #fff; }
-      main .hero-section { position: relative; }
-      .hero-overlay {
-        position: absolute;
-        left: 32px;
-        bottom: 40px;
-        z-index: 5;
-        pointer-events: none;
-      }
-      .hero-overlay h1 { font-size: 28px; letter-spacing: 2px; text-shadow: 0 2px 16px rgba(0,0,0,0.7); }
-      .hero-overlay p { margin-top: 6px; font-size: 14px; opacity: 0.75; }
+
+      /* 内容：正常流滚动，覆盖在固定背景之上 */
       .content {
+        position: relative;
+        z-index: 10;
         max-width: 860px;
-        margin: 64px auto;
+        margin: 0 auto;
         padding: 0 24px;
       }
-      .content h2 {
+      /* 首屏占位：让标题区占满一屏，往下滚文字才上来 */
+      .hero-pad {
+        height: 100dvh;
+        min-height: 480px;
+        position: relative;
+        z-index: 10;
+        pointer-events: none;
+      }
+      .hero-overlay {
+        position: absolute;
+        left: 50%;
+        top: 68%;
+        transform: translateX(-50%);
+        z-index: 11;
+        text-align: center;
+        opacity: 0;
+        transition: opacity 0.9s ease;
+      }
+      .hero-overlay.show { opacity: 1; }
+      .hero-overlay h1 { font-size: 30px; letter-spacing: 3px; text-shadow: 0 2px 16px rgba(0,0,0,0.7); }
+      .hero-overlay p { margin-top: 8px; font-size: 14px; opacity: 0.75; letter-spacing: 1px; }
+      .posts {
+        max-width: 860px;
+        margin: 0 auto 40px;
+        padding: 48px 24px 24px;
+        position: relative;
+        z-index: 10;
+        background: linear-gradient(180deg, rgba(13,10,22,0.85) 0%, rgba(13,10,22,0.97) 30%, var(--bg-0) 100%);
+        border-radius: 18px 18px 0 0;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+      }
+      .posts h2 {
         font-size: 22px;
         margin-bottom: 16px;
         padding-bottom: 8px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.12);
       }
-      .content p { line-height: 1.9; opacity: 0.85; margin-bottom: 16px; }
+      .posts p { line-height: 1.9; opacity: 0.85; margin-bottom: 16px; }
+      .about { padding: 0 24px 60px; max-width: 860px; margin: 0 auto; position: relative; z-index: 10; }
+      .about h2 {
+        font-size: 22px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      }
+      .about p { line-height: 1.9; opacity: 0.85; margin-bottom: 16px; }
     </style>
   </head>
   <body>
@@ -82,20 +117,23 @@ import HeroCanvas from '../components/HeroCanvas.astro';
     </header>
 
     <main>
-      <section class="hero-section">
-        <HeroCanvas />
+      <!-- 固定背景：全屏粒子 hero（不随滚动移动） -->
+      <HeroCanvas />
+
+      <!-- 首屏占位：文字内容在正常流中，滚动时只有文字上去 -->
+      <div class="hero-pad">
         <div class="hero-overlay">
           <h1>你好，我是 youran</h1>
           <p>Linux 折腾 · 内核编译 · AI 机器人 · 游戏</p>
         </div>
-      </section>
+      </div>
 
-      <section class="content" id="posts">
+      <section class="posts" id="posts">
         <h2>最近文章</h2>
         <p>博客搭建中，敬请期待。</p>
       </section>
 
-      <section class="content" id="about">
+      <section class="about" id="about">
         <h2>关于</h2>
         <p>这里是 youran 的技术折腾记录，主要写 Linux 桌面、内核编译、AI 应用和游戏相关的内容。</p>
       </section>

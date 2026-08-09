@@ -1,14 +1,18 @@
 /**
  * stateMachine.ts — 轻量状态机
  *
- * 5 个状态：SLIDE_IN → BURST → REASSEMBLE → GIF_FADE_IN → FOLLOW
+ * 状态：BOOT → CHARGE → CRASH → TSUNAMI → WAVE2 → WAVE3 → TITLE → SETTLE
  * 状态切换事件驱动，方便以后加别的触发（例如快速划过彩蛋）
  */
 
 export type HeroState =
+  | 'BOOT'
   | 'CHARGE'
   | 'CRASH'
-  | 'WAVE'
+  | 'TSUNAMI'
+  | 'WAVE2'
+  | 'WAVE3'
+  | 'TITLE'
   | 'SETTLE';
 
 export interface StateHandlers {
@@ -22,7 +26,7 @@ export class StateMachine {
   private handlers: Record<HeroState, StateHandlers>;
   private elapsed = 0;
 
-  constructor(handlers: Record<HeroState, StateHandlers>, initial: HeroState = 'CHARGE') {
+  constructor(handlers: Record<HeroState, StateHandlers>, initial: HeroState = 'BOOT') {
     this.handlers = handlers;
     this.current = initial;
     this.handlers[this.current]?.enter?.();

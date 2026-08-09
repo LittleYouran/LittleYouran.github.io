@@ -1,27 +1,42 @@
 /**
- * hero.ts — 博客首页粒子角色动画主控 v4
+ * hero.ts — 博客首页粒子角色动画主控 v5
  *
- * 流程：CHARGE（左→右冲刺，GIF 播放）→ CRASH（撞右墙破碎）→ WAVE（波浪从右往左扫过，背景贴纸墙显现）→ SETTLE（常驻）
+ * 入场流程（用户定制版）：
+ *   BOOT（空屏）→ CHARGE（格里德利从左/中向右冲刺，GIF 播放）
+ *   → CRASH（撞右墙，粒子向右释放 + 向左扩散到 3/10 处）
+ *   → TSUNAMI（海啸式椭圆波浪从右往左滚动，扫过处铺亚克力背板）
+ *   → WAVE2（第二次波浪从右往左，扫过处铺贴纸图片）
+ *   → WAVE3（第三次收尾波浪）
+ *   → TITLE（全部映射完成后标题浮现）→ SETTLE（常驻：背景粒子 + 鼠标跟随）
  *
- * 层结构：
- *   .hero-bg      背景贴纸墙（亚克力背板 + 15 张贴纸，clip-path 波浪控制显现）
- *   canvas        粒子层（爆炸方块 + 背景方块 + 夕阳红拖尾）
- *   .hero-runner  入场大 GIF（从左冲向右，撞墙后消失）
- *   .hero-follow  跟随小 GIF（缩小版，鼠标跟随 + 拖尾，静止/移出消失）
+ * 层结构（页面背景 fixed 铺满全屏，内容在正常流中滚动）：
+ *   .hero-bg        背景容器（贴纸墙 + 亚克力背板，两个子层各自 clip-path 控制波浪显现）
+ *   canvas          粒子层（爆炸方块 + 背景浮动方块 + 夕阳红拖尾）
+ *   .hero-runner    入场大 GIF（从中间冲向右，撞墙后消失）
+ *   .hero-follow    跟随小 GIF（鼠标跟随 + 拖尾，静止/移出消失）
+ *   .hero-title     大标题（文字图 + 翘腿角色装饰，入场完成后由 onTitleReady 通知显示）
  */
 
 import { Particle, createParticle, springTo, floatBg } from './particle';
 import { StateMachine } from './stateMachine';
 
 export interface HeroOptions {
-  /** 格里德利 GIF URL（入场大角色 + 跟随小角色用同一张） */
+  /** 格里德利 GIF URL（入场大角色用） */
   gifSrc: string;
+  /** 格里德利小 GIF URL（鼠标跟随用） */
+  followGifSrc?: string;
   /** 贴纸墙 URL 数组（已抠图的透明 PNG，15 张） */
   stickers: string[];
+  /** 标题文字图 URL（大标题，如"直到此地变成一颗酸橙"） */
+  titleSrc?: string;
+  /** 标题装饰角色图 URL（翘腿角色，放在标题上面） */
+  titleDecoSrc?: string;
   /** 目标粒子数量（默认 7000，弱设备自动减半） */
   maxParticles?: number;
-  /** 跟随小角色尺寸 px（默认 90，缩得很小但要看得清） */
+  /** 跟随小角色尺寸 px（默认 96，缩得很小但要看得清） */
   followSize?: number;
+  /** 入场完成后回调（页面据此显示标题/隐藏加载态） */
+  onTitleReady?: () => void;
 }
 
 export interface HeroController {
@@ -35,7 +50,7 @@ const isWeakDevice = () =>
   (navigator.hardwareConcurrency ?? 8) <= 4 ||
   ((navigator as unknown as { deviceMemory?: number }).deviceMemory ?? 8) <= 4;
 
-/** 夕阳红渐变调色板（拖尾用）：深红 → 橙 → 金黄 */
+/** 夕阳红渐变调色板（拖尾/爆炸用）：深红 → 橙 → 金黄 */
 const SUNSET_COLORS = [
   '255, 60, 40',
   '255, 92, 40',
@@ -49,6 +64,16 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   const bg = document.createElement('div');
   bg.className = 'hero-bg';
   container.appendChild(bg);
+
+  // 亚克力背板层（先铺）
+  const acrylic = document.createElement('div');
+  acrylic.className = 'hero-acrylic';
+  bg.appendChild(acrylic);
+
+  // 贴纸墙层（后铺）
+  const stickerLayer = document.createElement('div');
+  stickerLayer.className = 'hero-sticker-layer';
+  bg.appendChild(stickerLayer);
 
   const canvas = document.createElement('canvas');
   canvas.className = 'hero-canvas';
@@ -67,6 +92,30 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   follow.style.opacity = '0';
   container.appendChild(follow);
 
+  // 大标题容器（内容流之外由页面控制，这里只负责入场完成时通知）
+  let titleEl: HTMLDivElement | null = null;
+  if (opts.titleSrc) {
+    titleEl = document.createElement('div');
+    titleEl.className = 'hero-title';
+    titleEl.style.opacity = '0';
+    titleEl.style.visibility = 'hidden';
+    if (opts.titleDecoSrc) {
+      const deco = document.createElement('img');
+      deco.className = 'hero-title-deco';
+      deco.src = opts.titleDecoSrc;
+      deco.alt = '';
+      deco.draggable = false;
+      titleEl.appendChild(deco);
+    }
+    const titleImg = document.createElement('img');
+    titleImg.className = 'hero-title-img';
+    titleImg.src = opts.titleSrc;
+    titleImg.alt = '';
+    titleImg.draggable = false;
+    titleEl.appendChild(titleImg);
+    container.appendChild(titleEl);
+  }
+
   const ctx = canvas.getContext('2d')!;
 
   // ---------- 贴纸墙 ----------
@@ -77,14 +126,9 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
     img.src = src;
     img.alt = '';
     img.draggable = false;
-    bg.appendChild(img);
+    stickerLayer.appendChild(img);
     stickerEls.push(img);
   }
-
-  // 亚克力板覆盖层（磨砂玻璃质感，贴纸有在它上面有在它下面）
-  const acrylic = document.createElement('div');
-  acrylic.className = 'hero-acrylic';
-  bg.appendChild(acrylic);
 
   // ---------- 尺寸 ----------
   let width = 0;
@@ -108,11 +152,11 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
     const n = stickerEls.length;
     for (let i = 0; i < n; i++) {
       const img = stickerEls[i];
-      const size = Math.min(width, height) * (0.14 + Math.random() * 0.12); // 14% ~ 26% 视口
+      const size = Math.min(width, height) * (0.13 + Math.random() * 0.12); // 13% ~ 25% 视口
       const x = Math.random() * (width - size);
       const y = Math.random() * (height - size);
-      const rot = (Math.random() - 0.5) * 24; // -12° ~ 12°
-      const z = Math.random() > 0.45 ? 3 : 1; // 部分在亚克力之上，部分在之下
+      const rot = (Math.random() - 0.5) * 28; // -14° ~ 14°
+      const z = Math.random() > 0.42 ? 3 : 1; // 部分在亚克力之上，部分在之下
       img.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:auto;z-index:${z};transform:rotate(${rot}deg);opacity:0;`;
     }
   }
@@ -120,7 +164,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   // ---------- 状态 ----------
   const maxParticles = opts.maxParticles ?? 7000;
   const weak = isWeakDevice();
-  const followSize = opts.followSize ?? 90;
+  const followSize = opts.followSize ?? 96;
   const bgCount = weak ? 900 : 1700;
 
   let boomParticles: Particle[] = [];
@@ -129,7 +173,6 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   let crashX = 0;
   let crashY = 0;
   let runnerSize = 0;
-  let waveEdge = 100; // 背景 clip-path 右边界 %（100 → 0）
 
   // 鼠标状态
   let mouseX = 0;
@@ -142,38 +185,46 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   let followVY = 0;
   let followVisible = false;
 
-  // ---------- 工具 ----------
-  function setWaveClip(edgePct: number) {
-    // 波浪形 clip-path：保留区域 = 波浪线 → 右边缘，波浪线从 100% 往左扫到 0%（展现从右往左）
+  // ---------- 波浪工具 ----------
+  /** 椭圆波浪 clip-path：中心 cx（0~100%）从左往右移动，扫过区域显示 */
+  function setEllipseClip(el: HTMLElement, cxPct: number, ryPct: number, rxPct = 60) {
+    el.style.clipPath = `ellipse(${rxPct}% ${ryPct}% at ${cxPct}% 50%)`;
+  }
+  function clearClip(el: HTMLElement) {
+    el.style.clipPath = 'none';
+  }
+  /** 海啸收尾波浪：多边形波浪线从右往左扫 */
+  function setWaveClip(el: HTMLElement, edgePct: number) {
     const pts: string[] = [];
-    const steps = 14;
+    const steps = 16;
     for (let i = 0; i <= steps; i++) {
       const t = i / steps;
-      const y = 100 - t * 100; // 从底到顶
-      const wobble = Math.sin(t * Math.PI * 3 + performance.now() * 0.003) * 3;
+      const y = 100 - t * 100;
+      const wobble = Math.sin(t * Math.PI * 3 + performance.now() * 0.004) * 4;
       pts.push(`${(edgePct + wobble).toFixed(2)}% ${y.toFixed(2)}%`);
     }
-    bg.style.clipPath = `polygon(100% 0%, 100% 100%, 0% 100%, ${pts.join(', ')}, 0% 0%)`;
+    el.style.clipPath = `polygon(100% 0%, 100% 100%, 0% 100%, ${pts.join(', ')}, 0% 0%)`;
   }
 
   function setStickerOpacity(opacity: number) {
     for (const img of stickerEls) img.style.opacity = String(opacity);
   }
 
+  // ---------- 粒子生成 ----------
   function spawnBoom(x: number, y: number) {
     const colors = ['255,120,60', '255,180,80', '255,90,120', '255,220,140', '180,120,255', '120,200,255'];
     boomParticles = [];
-    const count = weak ? 70 : 120;
+    const count = weak ? 90 : 150;
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 4 + Math.random() * 14;
-      const size = 2 + Math.random() * 5;
+      const speed = 4 + Math.random() * 16;
+      const size = 2 + Math.random() * 6;
       boomParticles.push(
         createParticle({
           x,
           y,
-          homeX: Math.cos(angle) * (60 + Math.random() * 160),
-          homeY: Math.sin(angle) * (60 + Math.random() * 160),
+          homeX: Math.cos(angle) * (60 + Math.random() * 220),
+          homeY: Math.sin(angle) * (60 + Math.random() * 220),
           size,
           color: `rgb(${colors[i % colors.length]})`,
           delay: 0,
@@ -181,7 +232,9 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
         }),
       );
       const p = boomParticles[boomParticles.length - 1];
-      p.vx = Math.cos(angle) * speed;
+      // 主体向右释放 + 部分向左扩散
+      const dir = Math.random() < 0.62 ? 1 : -1;
+      p.vx = dir * Math.abs(Math.cos(angle)) * speed * (dir > 0 ? 1 : 0.55);
       p.vy = Math.sin(angle) * speed - 3;
       p.phase = Math.random() * Math.PI * 2;
     }
@@ -223,24 +276,37 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
 
   // ---------- 状态机 ----------
   const sm = new StateMachine({
+    BOOT: {
+      enter() {
+        // 空屏：什么都不展现
+        setStickerOpacity(0);
+        clearClip(acrylic);
+        clearClip(stickerLayer);
+        acrylic.style.opacity = '0';
+        stickerLayer.style.opacity = '0';
+        bg.style.opacity = '0';
+        runner.style.opacity = '0';
+        follow.style.opacity = '0';
+      },
+      update() {
+        if (sm.time > 400) sm.setState('CHARGE');
+      },
+    },
     CHARGE: {
       enter() {
+        // 从中间偏左出发，向右冲刺
         runner.style.opacity = '1';
         runner.style.width = `${runnerSize}px`;
         runner.style.height = `${runnerSize}px`;
-        runner.style.transform = `translate(${-runnerSize}px, ${height / 2 - runnerSize / 2}px)`;
-        // 初始完全隐藏背景（贴纸墙等待波浪显现）
-        setWaveClip(100);
-        setStickerOpacity(0);
-        bg.style.opacity = '0';
+        runner.style.transform = `translate(${width * 0.18 - runnerSize / 2}px, ${height / 2 - runnerSize / 2}px)`;
       },
       update() {
-        const t = Math.min(1, sm.time / 950); // 加速冲向右
-        const ease = t * t * t; // easeIn cubic
-        const x = -runnerSize + (width - runnerSize * 0.4) * ease;
+        const t = Math.min(1, sm.time / 950);
+        const ease = t * t * t;
+        const x = width * 0.18 - runnerSize / 2 + (width * 0.82) * ease;
         runner.style.transform = `translate(${x}px, ${height / 2 - runnerSize / 2}px)`;
         if (t >= 1) {
-          crashX = width - runnerSize * 0.4 + runnerSize / 2;
+          crashX = width - runnerSize * 0.45;
           crashY = height / 2;
           sm.setState('CRASH');
         }
@@ -248,60 +314,115 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
     },
     CRASH: {
       enter() {
-        // 撞墙：隐藏入场角色，粒子破碎
         runner.style.opacity = '0';
         spawnBoom(crashX, crashY);
+        // 空屏背景下爆炸
+        bg.style.opacity = '1';
       },
       update() {
         let alive = 0;
         for (const p of boomParticles) {
           p.vx *= 0.955;
-          p.vy = p.vy * 0.955 + 0.12; // 轻微重力
+          p.vy = p.vy * 0.955 + 0.12;
           p.x += p.vx;
           p.y += p.vy;
-          p.alpha *= 0.985;
+          p.alpha *= 0.988;
           if (p.alpha > 0.03) alive++;
         }
-        if (sm.time > 550) sm.setState('WAVE');
+        if (sm.time > 620) sm.setState('TSUNAMI');
       },
     },
-    WAVE: {
+    TSUNAMI: {
       enter() {
-        // 背景开始显现：从右往左波浪扫过
-        bg.style.opacity = '1';
+        // 海啸波浪：从右往左滚动，扫过处铺亚克力背板
+        acrylic.style.opacity = '1';
       },
       update() {
-        const t = Math.min(1, sm.time / 1700);
-        waveEdge = 100 - t * 100;
-        setWaveClip(waveEdge);
-        setStickerOpacity(Math.min(1, t * 1.3));
-        // 爆炸粒子继续飞散渐隐
+        const t = Math.min(1, sm.time / 1300);
+        // 椭圆中心从右(105%)往左(-5%)滚动，半径收窄形成海啸感
+        const cx = 105 - t * 110;
+        const ry = 90 - t * 20;
+        setEllipseClip(acrylic, cx, ry);
+        // 爆炸粒子继续飞散
+        for (const p of boomParticles) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.alpha *= 0.975;
+        }
+        if (t >= 1) {
+          clearClip(acrylic);
+          sm.setState('WAVE2');
+        }
+      },
+    },
+    WAVE2: {
+      enter() {
+        // 第二次波浪：从右往左铺贴纸
+        stickerLayer.style.opacity = '1';
+      },
+      update() {
+        const t = Math.min(1, sm.time / 1350);
+        const cx = 105 - t * 110;
+        const ry = 92 - t * 22;
+        setEllipseClip(stickerLayer, cx, ry);
+        setStickerOpacity(Math.min(1, t * 1.5));
         for (const p of boomParticles) {
           p.x += p.vx;
           p.y += p.vy;
           p.alpha *= 0.97;
         }
-        if (t >= 1) sm.setState('SETTLE');
+        if (t >= 1) {
+          clearClip(stickerLayer);
+          setStickerOpacity(1);
+          sm.setState('WAVE3');
+        }
       },
     },
-    SETTLE: {
+    WAVE3: {
       enter() {
-        bg.style.clipPath = 'none';
-        setStickerOpacity(1);
+        // 收尾波浪：整体再扫一次
+      },
+      update() {
+        const t = Math.min(1, sm.time / 900);
+        setWaveClip(bg, 100 - t * 100);
+        for (const p of boomParticles) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.alpha *= 0.96;
+        }
+        if (t >= 1) {
+          clearClip(bg);
+          sm.setState('TITLE');
+        }
+      },
+    },
+    TITLE: {
+      enter() {
         boomParticles = [];
         spawnBgParticles();
-        // 跟随小角色淡入
+        // 标题浮现
+        if (titleEl) {
+          titleEl.style.visibility = 'visible';
+          titleEl.style.transition = 'opacity 0.9s ease';
+          titleEl.style.opacity = '1';
+        }
+        opts.onTitleReady?.();
+        // 跟随小角色准备
         follow.style.width = `${followSize}px`;
         follow.style.height = `${followSize}px`;
         followX = width / 2;
         followY = height / 2;
-        followVisible = true;
-        follow.style.opacity = '1';
-        // 入场角色移除
+        followVisible = false;
         runner.style.display = 'none';
+        sm.setState('SETTLE');
       },
       update() {
-        // 鼠标跟随（弹簧阻尼）
+        // 直接进入常驻
+      },
+    },
+    SETTLE: {
+      enter() {},
+      update() {
         if (mouseActive) {
           const targetX = mouseX - followSize / 2;
           const targetY = mouseY - followSize / 2;
@@ -312,13 +433,10 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
           followX += followVX;
           followY += followVY;
           follow.style.transform = `translate(${followX}px, ${followY}px)`;
-
-          // 拖尾（移动时才有）
           if (performance.now() - lastMove < 600) {
             spawnTrail(followX + followSize / 2, followY + followSize / 2);
           }
         }
-        // 鼠标静止/移出窗口 → 小角色淡出
         if (performance.now() - lastMove > 1600 || !mouseActive) {
           if (followVisible) {
             followVisible = false;
@@ -328,10 +446,8 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
           followVisible = true;
           follow.style.opacity = '1';
         }
-        // 背景粒子浮动
         const now = performance.now();
         for (const p of bgParticles) floatBg(p, now, 3);
-        // 拖尾更新
         for (const tp of trailParticles) {
           tp.x += tp.vx;
           tp.y += tp.vy;
@@ -399,7 +515,6 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
 
     sm.update(dt);
 
-    // 绘制
     ctx.clearRect(0, 0, width, height);
     ctx.save();
     drawBoom();
@@ -412,20 +527,30 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   // ---------- 启动 ----------
   async function start() {
     runner.src = opts.gifSrc;
-    follow.src = opts.gifSrc;
-    await new Promise<void>((resolve) => {
-      if (runner.complete) resolve();
-      else runner.addEventListener('load', () => resolve(), { once: true });
-    });
+    follow.src = opts.followGifSrc || opts.gifSrc;
+    await Promise.all([
+      new Promise<void>((resolve) => {
+        if (runner.complete) resolve();
+        else runner.addEventListener('load', () => resolve(), { once: true });
+      }),
+      new Promise<void>((resolve) => {
+        if (follow.complete) resolve();
+        else follow.addEventListener('load', () => resolve(), { once: true });
+      }),
+    ]);
 
     resize();
-    runnerSize = Math.min(width, height) * 0.3;
+    runnerSize = Math.min(width, height) * 0.22;
     layoutStickers();
 
-    // reduced-motion：直接显示背景贴纸墙 + 小角色，跳过动画
+    // reduced-motion：直接显示背景贴纸墙 + 标题，跳过动画
     if (prefersReducedMotion()) {
       bg.style.opacity = '1';
-      bg.style.clipPath = 'none';
+      clearClip(bg);
+      clearClip(acrylic);
+      clearClip(stickerLayer);
+      acrylic.style.opacity = '1';
+      stickerLayer.style.opacity = '1';
       setStickerOpacity(1);
       spawnBgParticles();
       follow.style.display = 'block';
@@ -433,6 +558,11 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
       follow.style.height = `${followSize}px`;
       follow.style.opacity = '1';
       runner.style.display = 'none';
+      if (titleEl) {
+        titleEl.style.visibility = 'visible';
+        titleEl.style.opacity = '1';
+      }
+      opts.onTitleReady?.();
       lastTs = performance.now();
       raf = requestAnimationFrame(loop);
       return;
@@ -446,12 +576,21 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   start().catch((err) => {
     console.error('[hero] 初始化失败，降级为直接显示贴纸墙', err);
     bg.style.opacity = '1';
-    bg.style.clipPath = 'none';
+    clearClip(bg);
+    clearClip(acrylic);
+    clearClip(stickerLayer);
+    acrylic.style.opacity = '1';
+    stickerLayer.style.opacity = '1';
     setStickerOpacity(1);
     follow.style.opacity = '1';
     follow.style.width = `${followSize}px`;
     follow.style.height = `${followSize}px`;
     runner.style.display = 'none';
+    if (titleEl) {
+      titleEl.style.visibility = 'visible';
+      titleEl.style.opacity = '1';
+    }
+    opts.onTitleReady?.();
   });
 
   return {
@@ -464,6 +603,7 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
       container.removeChild(canvas);
       container.removeChild(runner);
       container.removeChild(follow);
+      if (titleEl) container.removeChild(titleEl);
     },
   };
 }

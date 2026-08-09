@@ -13,5 +13,8 @@
   },
   "allowScripts": {
     "sharp@0.33.5": true
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1"
   }
 }
