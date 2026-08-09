@@ -68,7 +68,8 @@ import HeroCanvas from '../components/HeroCanvas.astro';
       .hero-overlay {
         position: absolute;
         left: 50%;
-        top: 68%;
+        bottom: 10%;
+        top: auto;
         transform: translateX(-50%);
         z-index: 11;
         text-align: center;
@@ -78,6 +79,28 @@ import HeroCanvas from '../components/HeroCanvas.astro';
       .hero-overlay.show { opacity: 1; }
       .hero-overlay h1 { font-size: 30px; letter-spacing: 3px; text-shadow: 0 2px 16px rgba(0,0,0,0.7); }
       .hero-overlay p { margin-top: 8px; font-size: 14px; opacity: 0.75; letter-spacing: 1px; }
+      /* 前往下一页按钮 */
+      .next-btn {
+        display: inline-block;
+        margin-top: 18px;
+        padding: 10px 28px;
+        border-radius: 40px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        color: #fff;
+        font-size: 14px;
+        letter-spacing: 2px;
+        cursor: pointer;
+        text-decoration: none;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+      }
+      .next-btn:hover {
+        background: rgba(255, 255, 255, 0.22);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 24px rgba(255, 120, 60, 0.25);
+      }
       .posts {
         max-width: 860px;
         margin: 0 auto 40px;
@@ -104,6 +127,54 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         border-bottom: 1px solid rgba(255, 255, 255, 0.12);
       }
       .about p { line-height: 1.9; opacity: 0.85; margin-bottom: 16px; }
+      /* 第二页：大背景图 + 介绍 */
+      .page2 {
+        position: relative;
+        z-index: 10;
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .page2-bg {
+        position: absolute;
+        inset: 0;
+        background-image: url('/hero/v6/big-bg.png');
+        background-size: cover;
+        background-position: center;
+        z-index: 0;
+      }
+      .page2-bg::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(13, 10, 22, 0.45);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+      }
+      .page2-content {
+        position: relative;
+        z-index: 1;
+        max-width: 680px;
+        margin: 0 24px;
+        padding: 40px;
+        border-radius: 24px;
+        background: rgba(13, 10, 22, 0.55);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.8s ease, transform 0.8s ease;
+      }
+      .page2-content.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .page2-content h2 { font-size: 28px; letter-spacing: 3px; margin-bottom: 20px; }
+      .page2-content p { line-height: 2; opacity: 0.9; margin-bottom: 16px; }
     </style>
   </head>
   <body>
@@ -123,10 +194,19 @@ import HeroCanvas from '../components/HeroCanvas.astro';
       <!-- 首屏占位：文字内容在正常流中，滚动时只有文字上去 -->
       <div class="hero-pad">
         <div class="hero-overlay">
-          <h1>你好，我是 youran</h1>
-          <p>Linux 折腾 · 内核编译 · AI 机器人 · 游戏</p>
+          <a class="next-btn" href="#page2">前往下一页 ↓</a>
         </div>
       </div>
+
+      <!-- 第二页：大背景图 + 介绍 -->
+      <section class="page2" id="page2">
+        <div class="page2-bg"></div>
+        <div class="page2-content" id="page2-content">
+          <h2>你好，我是 youran</h2>
+          <p>Linux 折腾 · 内核编译 · AI 机器人 · 游戏</p>
+          <p>这里是我的技术折腾记录，主要写 Linux 桌面、内核编译、AI 应用和游戏相关的内容。</p>
+        </div>
+      </section>
 
       <section class="posts" id="posts">
         <h2>最近文章</h2>
@@ -138,5 +218,23 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         <p>这里是 youran 的技术折腾记录，主要写 Linux 桌面、内核编译、AI 应用和游戏相关的内容。</p>
       </section>
     </main>
+    <script>
+      // 滚动到第二页时淡入介绍内容
+      const page2Content = document.getElementById('page2-content');
+      if (page2Content) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                page2Content.classList.add('visible');
+                io.disconnect();
+              }
+            });
+          },
+          { threshold: 0.3 },
+        );
+        io.observe(page2Content);
+      }
+    </script>
   </body>
 </html>

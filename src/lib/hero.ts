@@ -148,14 +148,24 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   }
 
   // ---------- 贴纸布局 ----------
+  // v6: 网格 + 抖动分散布局，避免集中/重叠
   function layoutStickers() {
     const n = stickerEls.length;
+    const cols = Math.ceil(Math.sqrt(n * width / Math.max(height, 1)));
+    const rows = Math.ceil(n / cols);
+    const cellW = width / cols;
+    const cellH = height / rows;
     for (let i = 0; i < n; i++) {
       const img = stickerEls[i];
-      const size = Math.min(width, height) * (0.13 + Math.random() * 0.12); // 13% ~ 25% 视口
-      const x = Math.random() * (width - size);
-      const y = Math.random() * (height - size);
-      const rot = (Math.random() - 0.5) * 28; // -14° ~ 14°
+      // 网格位置 + 格内抖动（±20% 格宽）
+      const gx = i % cols;
+      const gy = Math.floor(i / cols);
+      const jx = (Math.random() - 0.5) * cellW * 0.4;
+      const jy = (Math.random() - 0.5) * cellH * 0.4;
+      const size = Math.min(width, height) * (0.12 + Math.random() * 0.1); // 12% ~ 22% 视口
+      const x = gx * cellW + cellW * 0.5 - size / 2 + jx;
+      const y = gy * cellH + cellH * 0.5 - size / 2 + jy;
+      const rot = (Math.random() - 0.5) * 18; // -9° ~ 9°
       const z = Math.random() > 0.42 ? 3 : 1; // 部分在亚克力之上，部分在之下
       img.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:auto;z-index:${z};transform:rotate(${rot}deg);opacity:0;`;
     }
@@ -289,21 +299,22 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
         follow.style.opacity = '0';
       },
       update() {
-        if (sm.time > 400) sm.setState('CHARGE');
+        // v6: 图片已预加载完，立即进入冲刺，不等
+        if (sm.time > 0) sm.setState('CHARGE');
       },
     },
     CHARGE: {
       enter() {
-        // 从中间偏左出发，向右冲刺
-        runner.style.opacity = '1';
+        // v6: 入场角色从中间偏左出发，加速向右冲刺
         runner.style.width = `${runnerSize}px`;
         runner.style.height = `${runnerSize}px`;
-        runner.style.transform = `translate(${width * 0.18 - runnerSize / 2}px, ${height / 2 - runnerSize / 2}px)`;
+        runner.style.opacity = '1';
+        runner.style.transform = `translate(${width * 0.25 - runnerSize / 2}px, ${height / 2 - runnerSize / 2}px)`;
       },
       update() {
         const t = Math.min(1, sm.time / 950);
         const ease = t * t * t;
-        const x = width * 0.18 - runnerSize / 2 + (width * 0.82) * ease;
+        const x = width * 0.25 - runnerSize / 2 + (width * 0.75) * ease;
         runner.style.transform = `translate(${x}px, ${height / 2 - runnerSize / 2}px)`;
         if (t >= 1) {
           crashX = width - runnerSize * 0.45;
@@ -426,10 +437,11 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
         if (mouseActive) {
           const targetX = mouseX - followSize / 2;
           const targetY = mouseY - followSize / 2;
-          followVX += (targetX - followX) * 0.09;
-          followVY += (targetY - followY) * 0.09;
-          followVX *= 0.82;
-          followVY *= 0.82;
+          // v6: 更跟手：加速度更大、阻尼更小
+          followVX += (targetX - followX) * 0.16;
+          followVY += (targetY - followY) * 0.16;
+          followVX *= 0.86;
+          followVY *= 0.86;
           followX += followVX;
           followY += followVY;
           follow.style.transform = `translate(${followX}px, ${followY}px)`;
@@ -528,6 +540,14 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
   async function start() {
     runner.src = opts.gifSrc;
     follow.src = opts.followGifSrc || opts.gifSrc;
+    // v6: 贴纸后台预加载（不阻塞入场动画，冲刺立即开始）
+    // 贴纸 opacity 由 WAVE2 动画统一控制，这里只确保它们加载中
+    for (const img of stickerEls) {
+      if (!img.complete) {
+        img.addEventListener('load', () => {}, { once: true });
+        img.addEventListener('error', () => {}, { once: true });
+      }
+    }
     await Promise.all([
       new Promise<void>((resolve) => {
         if (runner.complete) resolve();

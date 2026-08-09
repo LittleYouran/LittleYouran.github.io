@@ -11,12 +11,12 @@
 //   stickerCount: 贴纸数量（默认 15）
 //   followSize:   跟随小角色尺寸 px（默认 96）
 const {
-  stickerBase = '/hero/v5/',
-  gifSrc = '/hero/v5/gridley-clean.gif',
-  followGifSrc = '/hero/v5/gridley-tiny-clean.gif',
-  titleSrc = '/hero/v5/title.png',
-  titleDecoSrc = '/hero/v5/deco.png',
-  stickerCount = 13,
+  stickerBase = '/hero/v6/',
+  gifSrc = '/hero/v6/gridley-run.gif',
+  followGifSrc = '/hero/v6/gridley-tiny-clean.gif',
+  titleSrc = '/hero/v6/9F1DF0.png',
+  titleDecoSrc = '/hero/v6/deco.png',
+  stickerCount = 10,
   followSize = 96,
 } = Astro.props;
 
@@ -125,12 +125,12 @@ const stickers = Array.from(
     height: auto;
     filter: drop-shadow(0 8px 28px rgba(0, 0, 0, 0.65));
   }
-  /* 翘腿角色装饰：放在标题上面 */
+  /* 翘腿角色装饰：放在标题上面（叠在"大地"大字上） */
   .hero-title-deco {
-    max-width: min(26vw, 260px);
+    max-width: min(30vw, 300px);
     width: 100%;
     height: auto;
-    margin-bottom: -6%;
+    margin-bottom: -12%;
     filter: drop-shadow(0 10px 30px rgba(255, 120, 60, 0.35));
     z-index: 8;
   }
