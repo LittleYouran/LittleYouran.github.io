@@ -1,45 +1,79 @@
 ---
-// HeroCanvas.astro — 粒子角色 hero 组件
+// HeroCanvas.astro — 全屏粒子角色 hero 组件（v2）
 // 用法：
 //   <HeroCanvas />
 // 可选 props：
-//   sampleSrc: 采样图 URL（默认 /hero/sample.png）
-//   gifSrc:    原 GIF URL（默认 /hero/hero.gif）
-//   maxParticles: 目标粒子数（默认 8000）
+//   bgSrc:     背景采样图 URL（默认 /hero/bg.png，透明角色大图）
+//   followSrc: 跟随小角色图 URL（默认 /hero/follow.png，透明角色小图）
+//   gridSize:  粒子网格步长 px（默认 12）
+//   followSize: 跟随小角色尺寸 px（默认 110）
 const {
-  sampleSrc = '/hero/sample.png',
-  gifSrc = '/hero/hero.gif',
-  maxParticles = 8000,
+  bgSrc = '/hero/bg.png',
+  followSrc = '/hero/follow.png',
+  gridSize = 12,
+  followSize = 110,
 } = Astro.props;
 ---
 
 <div
   class="hero-wrap"
-  data-sample={sampleSrc}
-  data-gif={gifSrc}
-  data-max-particles={maxParticles}
+  data-bg={bgSrc}
+  data-follow={followSrc}
+  data-grid-size={gridSize}
+  data-follow-size={followSize}
 ></div>
 
 <style is:global>
   .hero-wrap {
     position: relative;
     width: 100%;
-    height: 72vh;
+    height: 100dvh;
     min-height: 480px;
     overflow: hidden;
+    /* 亚克力磨砂背板 */
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0) 28%),
+      rgba(13, 10, 22, 0.38);
+    backdrop-filter: blur(16px) saturate(1.25) brightness(0.92);
+    -webkit-backdrop-filter: blur(16px) saturate(1.25) brightness(0.92);
   }
   .hero-canvas {
     position: absolute;
     inset: 0;
     pointer-events: none;
   }
-  .hero-gif {
+  .hero-follow {
     position: absolute;
     left: 0;
     top: 0;
     pointer-events: none;
     will-change: transform;
     user-select: none;
+    opacity: 0;
+    z-index: 3;
+  }
+  .hero-fallback {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .hero-rotate-tip {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 18px;
+    letter-spacing: 4px;
+    background: rgba(13, 10, 22, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 </style>
 
@@ -49,9 +83,10 @@ const {
   const el = document.querySelector('.hero-wrap');
   if (el) {
     initHero(el, {
-      sampleSrc: el.dataset.sample || '/hero/sample.png',
-      gifSrc: el.dataset.gif || '/hero/hero.gif',
-      maxParticles: Number(el.dataset.maxParticles) || 8000,
+      bgSrc: el.dataset.bg || '/hero/bg.png',
+      followSrc: el.dataset.follow || '/hero/follow.png',
+      gridSize: Number(el.dataset.gridSize) || 12,
+      followSize: Number(el.dataset.followSize) || 110,
     });
   }
 </script>

@@ -1,6 +1,12 @@
 # blog — 个人技术博客（Astro）
 
-首页带粒子角色 hero 动画的 Astro 静态博客。部署到 GitHub Pages。
+首页带全屏粒子角色 hero 动画的 Astro 静态博客。部署到 GitHub Pages。
+
+## Hero 效果（v2 全屏背景版）
+
+- **背景层**：亚克力磨砂背板 + 透明小方块粒子铺满整个屏幕，角色形状由粒子映照出来（马赛克像素风），固定不动
+- **跟随层**：透明小角色缩得很小，跟随鼠标移动（弹簧阻尼），鼠标停止 1.5s 或移出窗口就淡出，移动时留下夕阳红（红橙渐变）拖尾
+- **适配**：全屏铺满（100dvh），手机横屏适配（竖屏触屏设备显示"请横屏浏览"提示），dpr 适配，弱设备粒子减半，prefers-reduced-motion 降级
 
 ## 快速开始
 
@@ -24,8 +30,8 @@ blog/
 │   └── lib/                # 粒子动画核心库（来自 ../blog-hero/src/lib/）
 ├── public/
 │   └── hero/
-│       ├── hero.gif        # 角色动图
-│       └── sample.png      # 粒子采样图
+│       ├── bg.png          # 背景采样图（透明角色大图，粒子映照用）
+│       └── follow.png      # 跟随小角色图（透明角色小图，跟随鼠标用）
 └── package.json
 ```
 
@@ -37,7 +43,7 @@ blog/
 
 ## 换角色素材
 
-替换 `public/hero/hero.gif` 和 `public/hero/sample.png` 即可，粒子动画无需改代码。采样图生成方法见 `../blog-hero/README.md`。
+替换 `public/hero/bg.png` 和 `public/hero/follow.png` 即可，粒子动画无需改代码。素材要求：**透明背景的角色 PNG**（黑底图先用 ffmpeg colorkey 抠掉，见 `../blog-hero/README.md`）。
 
 ## 动画组件说明
 

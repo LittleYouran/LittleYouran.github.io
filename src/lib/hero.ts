@@ -1,22 +1,31 @@
 /**
- * hero.ts — 博客首页粒子角色动画主控
+ * hero.ts — 博客首页粒子角色动画主控（v2 全屏背景版）
  *
- * 流程：SLIDE_IN（滑入）→ BURST（炸开）→ REASSEMBLE（重组）→ GIF_FADE_IN（GIF 淡入）→ FOLLOW（鼠标跟随）
- * 双层：canvas 背景粒子层（固定）+ GIF 角色层（跟随鼠标）
+ * 双层结构：
+ *   - 背景层（canvas）：亚克力磨砂背板 + 透明小方块粒子铺满整个屏幕，
+ *     角色形状由粒子映照出来（马赛克像素风），固定不动，不跟随鼠标
+ *   - 跟随层（DOM img）：透明小角色缩得很小，跟随鼠标移动（弹簧阻尼），
+ *     鼠标停止 1.5s 或移出窗口就淡出，移动时留下夕阳红（红橙渐变）拖尾
+ *
+ * 适配：
+ *   - 全屏铺满（100dvh），自适应比例
+ *   - 手机端横屏适配：竖屏触屏设备显示"请横屏浏览"提示，横屏自动铺满
+ *   - dpr 适配、页面隐藏暂停、弱设备粒子减半、prefers-reduced-motion 降级
  */
 
-import { SamplePoint, loadImage, sampleFromImage } from './sampler';
-import { Particle, createParticle, springTo, floatBg } from './particle';
-import { StateMachine } from './stateMachine';
-import { MouseTrail } from './mouseTrail';
+import { loadImage } from './sampler';
 
 export interface HeroOptions {
-  /** 采样图 URL（角色静态帧缩略图） */
-  sampleSrc: string;
-  /** 原 GIF URL（入场完成后淡入） */
-  gifSrc: string;
-  /** 目标粒子数量（默认 8000，弱设备自动减半） */
-  maxParticles?: number;
+  /** 背景采样图 URL（透明背景角色大图，用于粒子映照） */
+  bgSrc: string;
+  /** 跟随小角色图 URL（透明背景角色小图） */
+  followSrc: string;
+  /** 粒子网格步长 px（默认 12，弱设备自动加大） */
+  gridSize?: number;
+  /** 跟随小角色尺寸 px（默认 110） */
+  followSize?: number;
+  /** 夕阳红拖尾持续时间 ms（默认 1100） */
+  trailMs?: number;
 }
 
 export interface HeroController {
@@ -30,335 +39,305 @@ const isWeakDevice = () =>
   (navigator.hardwareConcurrency ?? 8) <= 4 ||
   ((navigator as unknown as { deviceMemory?: number }).deviceMemory ?? 8) <= 4;
 
+/** 背景网格方块 */
+interface Tile {
+  x: number;
+  y: number;
+  size: number;
+  color: string;
+  alpha: number;
+  targetAlpha: number;
+  phase: number;
+}
+
+/** 拖尾轨迹点（屏幕坐标 + 时间戳） */
+interface TrailPoint {
+  x: number;
+  y: number;
+  t: number;
+}
+
 export function initHero(container: HTMLElement, opts: HeroOptions): HeroController {
   // ---------- DOM ----------
   const canvas = document.createElement('canvas');
   canvas.className = 'hero-canvas';
   container.appendChild(canvas);
-
-  const gif = document.createElement('img');
-  gif.className = 'hero-gif';
-  gif.alt = '';
-  gif.draggable = false;
-  gif.style.opacity = '0';
-  container.appendChild(gif);
-
   const ctx = canvas.getContext('2d')!;
 
+  const follow = document.createElement('img');
+  follow.className = 'hero-follow';
+  follow.alt = '';
+  follow.draggable = false;
+  follow.src = opts.followSrc;
+  follow.style.opacity = '0';
+  container.appendChild(follow);
+
+  const rotateTip = document.createElement('div');
+  rotateTip.className = 'hero-rotate-tip';
+  rotateTip.textContent = '请横屏浏览 ↻';
+  rotateTip.style.display = 'none';
+  container.appendChild(rotateTip);
+
   // ---------- 尺寸 ----------
-  let width = 0;
-  let height = 0;
+  let W = 0;
+  let H = 0;
   let dpr = 1;
-  let cx = 0;
-  let cy = 0;
 
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
-    width = container.clientWidth || window.innerWidth;
-    height = container.clientHeight || window.innerHeight;
-    canvas.width = Math.round(width * dpr);
-    canvas.height = Math.round(height * dpr);
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
+    W = container.clientWidth || window.innerWidth;
+    H = container.clientHeight || window.innerHeight;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    canvas.style.width = `${W}px`;
+    canvas.style.height = `${H}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    cx = width / 2;
-    cy = height / 2;
-    trail.setAnchor(0, 0);
-    trail.reset(0, 0);
-    applyGifTransform();
+    buildTiles();
+    checkOrientation();
   }
 
-  // ---------- 状态 ----------
-  const maxParticles = opts.maxParticles ?? 8000;
-  const weak = isWeakDevice();
-  const targetCount = weak ? Math.round(maxParticles / 2) : maxParticles;
+  // ---------- 背景网格方块 ----------
+  const grid = opts.gridSize ?? (isWeakDevice() ? 18 : 12);
+  let tiles: Tile[] = [];
+  let bgImage: HTMLImageElement | null = null;
 
-  let roleParticles: Particle[] = [];
-  let bgParticles: Particle[] = [];
-  let roleCenterX = 0;
-  let roleCenterY = 0;
-  let gifSize = 0;
+  /**
+   * 把透明角色图 cover 铺满屏幕，按网格采样像素生成小方块。
+   * 角色区域：彩色方块（半透明，保留原色）；背景区域：微弱暗色方块（亚克力网格感）。
+   */
+  function buildTiles() {
+    tiles = [];
+    if (!bgImage || W === 0 || H === 0) return;
 
-  const trail = new MouseTrail();
+    // cover 映射：角色图缩放铺满屏幕并居中
+    const iw = bgImage.naturalWidth || 540;
+    const ih = bgImage.naturalHeight || 540;
+    const scale = Math.max(W / iw, H / ih);
+    const dw = iw * scale;
+    const dh = ih * scale;
+    const dx = (W - dw) / 2;
+    const dy = (H - dh) / 2;
 
-  // ---------- 工具 ----------
-  const gifScreenPos = () => ({
-    left: cx + trail.x - gifSize / 2,
-    top: cy + trail.y - gifSize / 2,
-  });
+    // 离屏采样：把角色图按 cover 画好，逐格读像素
+    const off = document.createElement('canvas');
+    off.width = Math.max(1, Math.round(dw));
+    off.height = Math.max(1, Math.round(dh));
+    const octx = off.getContext('2d', { willReadFrequently: true });
+    if (!octx) return;
+    octx.drawImage(bgImage, 0, 0, off.width, off.height);
+    const { data } = octx.getImageData(0, 0, off.width, off.height);
 
-  function applyGifTransform() {
-    const { left, top } = gifScreenPos();
-    gif.style.transform = `translate(${left}px, ${top}px)`;
-  }
+    const tileSize = grid * 0.82;
+    for (let gy = 0; gy < H; gy += grid) {
+      for (let gx = 0; gx < W; gx += grid) {
+        // 采样格中心在离屏画布上的坐标
+        const sx = Math.round((gx + grid / 2 - dx));
+        const sy = Math.round((gy + grid / 2 - dy));
+        const inRange = sx >= 0 && sy >= 0 && sx < off.width && sy < off.height;
+        const i = inRange ? (sy * off.width + sx) * 4 : -1;
+        const a = inRange ? data[i + 3] : 0;
+        const r = inRange ? data[i] : 0;
+        const g = inRange ? data[i + 1] : 0;
+        const b = inRange ? data[i + 2] : 0;
 
-  function createRoleParticles(points: SamplePoint[]): Particle[] {
-    // 计算质心（角色中心）
-    let sumX = 0;
-    let sumY = 0;
-    for (const p of points) {
-      sumX += p.x;
-      sumY += p.y;
+        if (a > 40) {
+          // 角色区域：彩色方块
+          tiles.push({
+            x: gx,
+            y: gy,
+            size: tileSize,
+            color: `rgb(${r},${g},${b})`,
+            alpha: 0,
+            targetAlpha: 0.28 + (a / 255) * 0.55,
+            phase: Math.random() * Math.PI * 2,
+          });
+        } else {
+          // 背景区域：微弱暗色方块（亚克力网格）
+          tiles.push({
+            x: gx,
+            y: gy,
+            size: tileSize,
+            color: 'rgb(150,140,180)',
+            alpha: 0,
+            targetAlpha: 0.05 + Math.random() * 0.04,
+            phase: Math.random() * Math.PI * 2,
+          });
+        }
+      }
     }
-    const centroidX = sumX / points.length;
-    const centroidY = sumY / points.length;
-
-    // 采样图坐标 → 世界坐标比例
-    const scale = gifSize / 270; // sample.png 是 270x270
-    let maxDist = 1;
-    const homes = points.map((p) => {
-      const hx = (p.x - centroidX) * scale;
-      const hy = (p.y - centroidY) * scale;
-      maxDist = Math.max(maxDist, Math.hypot(hx, hy));
-      return { hx, hy, r: p.r, g: p.g, b: p.b };
-    });
-
-    return homes.map((h) => {
-      const dist = Math.hypot(h.hx, h.hy);
-      const depth = 1 - dist / maxDist; // 0=边缘 1=中心
-      const size = 0.6 + depth * 1.7 + Math.random() * 0.4;
-      const delay = dist / maxDist * 520 + 80; // 离中心越远重组越慢
-      // 初始在屏幕左侧外
-      const x = -width / 2 - 120 - Math.random() * 200;
-      const y = (Math.random() - 0.5) * height * 0.6;
-      return createParticle({
-        x,
-        y,
-        homeX: h.hx,
-        homeY: h.hy,
-        size,
-        color: `rgb(${h.r},${h.g},${h.b})`,
-        delay,
-        layer: 'role',
-      });
-    });
   }
 
-  function spawnBgParticles(from: Particle[]) {
-    // 从入场粒子中保留一部分当背景光点（提亮、漂白）
-    const keep = Math.max(8, Math.round(from.length * (weak ? 0.08 : 0.12)));
-    const picked = [...from].sort(() => Math.random() - 0.5).slice(0, keep);
-    bgParticles = picked.map((p) => {
-      const spread = Math.min(width, height) * (0.2 + Math.random() * 0.3);
-      const angle = Math.random() * Math.PI * 2;
-      const rgb = p.color.match(/\d+/g)?.map(Number) ?? [];
-      const r = rgb[0] ?? 255;
-      const g = rgb[1] ?? 200;
-      const b = rgb[2] ?? 220;
-      return createParticle({
-        x: p.x,
-        y: p.y,
-        homeX: Math.cos(angle) * spread,
-        homeY: Math.sin(angle) * spread * 0.8,
-        size: 0.8 + Math.random() * 1.6,
-        color: `rgba(${Math.min(255, r + 60)},${Math.min(255, g + 50)},${Math.min(255, b + 40)})`,
-        delay: 0,
-        layer: 'bg',
-      });
-    });
-  }
+  // ---------- 夕阳红拖尾 ----------
+  const trailMs = opts.trailMs ?? 1100;
+  const trail: TrailPoint[] = [];
 
-  function miniBurstBg() {
-    // 快速划过彩蛋：背景光点向外爆一下再回位
-    for (const p of bgParticles) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 3 + Math.random() * 6;
-      p.vx = Math.cos(angle) * speed;
-      p.vy = Math.sin(angle) * speed;
-      p.arrived = false;
+  function drawTrail(now: number) {
+    // 清理过期点
+    while (trail.length && now - trail[0].t > trailMs) trail.shift();
+    if (!trail.length) return;
+    ctx.save();
+    for (let k = 0; k < trail.length; k++) {
+      const p = trail[k];
+      const f = 1 - (now - p.t) / trailMs; // 0..1 新->旧
+      if (f <= 0) continue;
+      // 夕阳红渐变：深红 → 橙 → 金黄
+      const hue = 8 + f * 38;
+      const sat = 85 + f * 10;
+      const lit = 48 + f * 18;
+      ctx.globalAlpha = f * 0.5;
+      ctx.fillStyle = `hsl(${hue},${sat}%,${lit}%)`;
+      const s = 6 + f * 10;
+      ctx.fillRect(p.x - s / 2, p.y - s / 2, s, s);
     }
-    // 0.8s 后靠 floatBg 自然拉回
-    setTimeout(() => {
-      for (const p of bgParticles) p.arrived = false;
-    }, 800);
+    ctx.restore();
   }
 
-  // ---------- 状态机 ----------
-  const sm = new StateMachine({
-    SLIDE_IN: {
-      enter() {
-        // 初始：粒子已在左侧外（createRoleParticles 时设定）
-      },
-      update() {
-        let arrived = 0;
-        for (const p of roleParticles) {
-          const waveDelay = (roleParticles.indexOf(p) % 12) * 30;
-          if (sm.time < waveDelay) {
-            // 未启动：保持初始速度缓慢漂移
-            p.x += 1.2;
-            continue;
-          }
-          if (springTo(p, roleCenterX + p.homeX, roleCenterY + p.homeY, 0.13, 0.8)) {
-            p.arrived = true;
-            arrived++;
-          }
-        }
-        if (arrived / roleParticles.length > 0.95) sm.setState('BURST');
-      },
-    },
-    BURST: {
-      enter() {
-        for (const p of roleParticles) {
-          const dx = p.x - roleCenterX;
-          const dy = p.y - roleCenterY;
-          const dist = Math.hypot(dx, dy) || 1;
-          const speed = 10 + Math.random() * 16;
-          p.vx = (dx / dist) * speed;
-          p.vy = (dy / dist) * speed;
-          p.arrived = false;
-        }
-      },
-      update() {
-        for (const p of roleParticles) {
-          p.vx *= 0.96;
-          p.vy *= 0.96;
-          p.x += p.vx;
-          p.y += p.vy;
-        }
-        if (sm.time > 650) sm.setState('REASSEMBLE');
-      },
-    },
-    REASSEMBLE: {
-      update() {
-        let arrived = 0;
-        for (const p of roleParticles) {
-          if (sm.time < p.delay) continue; // 离中心越远等待越久
-          if (springTo(p, roleCenterX + p.homeX, roleCenterY + p.homeY, 0.085, 0.82, 0.8)) {
-            p.arrived = true;
-            arrived++;
-          }
-        }
-        if (arrived / roleParticles.length > 0.95) sm.setState('GIF_FADE_IN');
-      },
-    },
-    GIF_FADE_IN: {
-      enter() {
-        spawnBgParticles(roleParticles);
-        for (const p of roleParticles) p.targetAlpha = 0;
-        gif.style.display = 'block';
-      },
-      update() {
-        const t = Math.min(1, sm.time / 1400);
-        gif.style.opacity = String(t);
-        for (const p of roleParticles) {
-          p.alpha += (p.targetAlpha - p.alpha) * 0.06;
-        }
-        for (const p of bgParticles) floatBg(p, sm.time + performance.now());
-        if (sm.time > 2200) sm.setState('FOLLOW');
-      },
-    },
-    FOLLOW: {
-      update() {
-        const burst = trail.update(performance.now(), mouseX, mouseY, cx, cy);
-        if (burst) miniBurstBg();
-        for (const p of bgParticles) floatBg(p, performance.now());
-        applyGifTransform();
-      },
-    },
-  });
-
-  // ---------- 鼠标 ----------
+  // ---------- 跟随小角色 ----------
+  const followSize = opts.followSize ?? 110;
+  let followX = -999;
+  let followY = -999;
+  let vx = 0;
+  let vy = 0;
   let mouseX = 0;
   let mouseY = 0;
-  const onMouseMove = (e: MouseEvent) => {
-    const rect = container.getBoundingClientRect();
-    mouseX = e.clientX - rect.left - cx;
-    mouseY = e.clientY - rect.top - cy;
-  };
-  window.addEventListener('mousemove', onMouseMove, { passive: true });
+  let lastMove = 0;
+  let followAlpha = 0;
 
-  // ---------- 主循环 ----------
+  follow.style.width = `${followSize}px`;
+  follow.style.height = `${followSize}px`;
+
+  function applyFollow() {
+    follow.style.transform = `translate(${followX - followSize / 2}px, ${followY - followSize / 2}px)`;
+    follow.style.opacity = String(followAlpha);
+  }
+
+  // ---------- 状态机（简化版：淡入 -> 常驻背景 + 跟随） ----------
+  let enterT = 0; // 入场时间（背景方块淡入）
   let raf = 0;
   let lastTs = 0;
+
   function loop(ts: number) {
     raf = requestAnimationFrame(loop);
     if (document.hidden) return;
+    const now = performance.now();
     const dt = Math.min(ts - lastTs, 50);
     lastTs = ts;
 
-    if (sm.state !== 'FOLLOW') {
-      sm.update(dt);
-      // 非 FOLLOW 状态角色层不动（GIF 还没淡入，不用 transform）
-    } else {
-      sm.update(dt);
+    // 背景方块淡入
+    enterT = Math.min(enterT + dt, 1200);
+    const fadeIn = Math.min(1, enterT / 1200);
+    const idle = Math.sin(now * 0.0006) * 0.02; // 整体呼吸
+    for (const t of tiles) {
+      t.alpha += (t.targetAlpha - t.alpha) * 0.045;
     }
 
-    // 绘制
-    ctx.clearRect(0, 0, width, height);
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.globalCompositeOperation = 'lighter';
+    // 跟随层：弹簧阻尼
+    const active = now - lastMove < 1500;
+    const targetX = active ? mouseX : followX;
+    const targetY = active ? mouseY : followY;
+    vx += (targetX - followX) * 0.14;
+    vy += (targetY - followY) * 0.14;
+    vx *= 0.8;
+    vy *= 0.8;
+    followX += vx;
+    followY += vy;
+    followAlpha += ((active ? 1 : 0) - followAlpha) * 0.08;
+    applyFollow();
 
-    // 背景粒子（固定，浮动闪烁）
-    for (const p of bgParticles) {
-      const tw = 0.55 + 0.45 * Math.sin(performance.now() * 0.002 + p.phase);
-      ctx.globalAlpha = p.alpha * tw * 0.55;
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
+    // 移动时记录拖尾
+    if (active && Math.hypot(vx, vy) > 0.4) {
+      trail.push({ x: followX, y: followY, t: now });
     }
 
-    // 角色粒子（入场阶段）
-    for (const p of roleParticles) {
-      if (p.alpha <= 0.01) continue;
-      ctx.globalAlpha = p.alpha;
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
+    // ---------- 绘制 ----------
+    ctx.clearRect(0, 0, W, H);
+
+    // 背景方块（固定，不跟随鼠标）
+    for (const t of tiles) {
+      if (t.alpha <= 0.01) continue;
+      const twinkle = 1 + Math.sin(now * 0.0008 + t.phase) * 0.08;
+      ctx.globalAlpha = Math.min(1, t.alpha * fadeIn * twinkle + idle);
+      ctx.fillStyle = t.color;
+      ctx.fillRect(t.x, t.y, t.size, t.size);
     }
 
-    ctx.restore();
+    // 夕阳红拖尾（画在背景之上）
+    drawTrail(now);
+
     ctx.globalAlpha = 1;
   }
 
+  // ---------- 鼠标 / 触摸 ----------
+  const onMove = (clientX: number, clientY: number) => {
+    const rect = container.getBoundingClientRect();
+    mouseX = clientX - rect.left;
+    mouseY = clientY - rect.top;
+    lastMove = performance.now();
+  };
+  const onMouseMove = (e: MouseEvent) => onMove(e.clientX, e.clientY);
+  const onTouchMove = (e: TouchEvent) => {
+    if (e.touches[0]) onMove(e.touches[0].clientX, e.touches[0].clientY);
+  };
+  const onMouseLeave = () => {
+    lastMove = 0;
+  };
+  window.addEventListener('mousemove', onMouseMove, { passive: true });
+  window.addEventListener('touchmove', onTouchMove, { passive: true });
+  container.addEventListener('mouseleave', onMouseLeave);
+
+  // ---------- 手机横屏提示 ----------
+  function checkOrientation() {
+    const portrait = matchMedia('(orientation: portrait)').matches;
+    const touch = matchMedia('(pointer: coarse)').matches;
+    rotateTip.style.display = portrait && touch ? 'flex' : 'none';
+  }
+  window.addEventListener('resize', resize);
+
   // ---------- 启动 ----------
   async function start() {
-    gif.src = opts.gifSrc;
-    await new Promise<void>((resolve) => {
-      if (gif.complete) resolve();
-      else gif.addEventListener('load', () => resolve(), { once: true });
-    });
-
-    // reduced-motion：直接显示 GIF，跳过动画
+    // reduced-motion：直接显示静态背景图，跳过粒子动画
     if (prefersReducedMotion()) {
-      gif.style.opacity = '1';
+      const staticImg = document.createElement('img');
+      staticImg.className = 'hero-fallback';
+      staticImg.alt = '';
+      staticImg.src = opts.bgSrc;
+      container.appendChild(staticImg);
+      rotateTip.style.display = 'none';
       return;
     }
 
-    const sample = await loadImage(opts.sampleSrc);
-    const points = sampleFromImage(sample, targetCount);
-
+    bgImage = await loadImage(opts.bgSrc);
     resize();
-    gifSize = Math.min(width, height) * 0.55;
-    roleCenterX = 0;
-    roleCenterY = height * 0.02;
 
-    gif.style.width = `${gifSize}px`;
-    gif.style.height = `${gifSize}px`;
+    followX = W / 2;
+    followY = H * 0.5;
+    mouseX = W / 2;
+    mouseY = H * 0.5;
+    lastMove = performance.now();
 
-    roleParticles = createRoleParticles(points);
-    applyGifTransform();
-    trail.setAnchor(0, height * 0.02);
-
-    window.addEventListener('resize', resize);
     lastTs = performance.now();
     raf = requestAnimationFrame(loop);
   }
 
   start().catch((err) => {
-    console.error('[hero] 初始化失败，降级为直接显示 GIF', err);
-    gif.style.opacity = '1';
+    console.error('[hero] 初始化失败，降级为直接显示背景图', err);
+    const staticImg = document.createElement('img');
+    staticImg.className = 'hero-fallback';
+    staticImg.alt = '';
+    staticImg.src = opts.bgSrc;
+    container.appendChild(staticImg);
   });
 
   return {
     destroy() {
       cancelAnimationFrame(raf);
       window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('resize', resize);
+      container.removeEventListener('mouseleave', onMouseLeave);
       container.removeChild(canvas);
-      container.removeChild(gif);
+      container.removeChild(follow);
+      container.removeChild(rotateTip);
     },
   };
 }
