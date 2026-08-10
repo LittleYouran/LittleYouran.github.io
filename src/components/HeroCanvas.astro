@@ -47,23 +47,27 @@ const stickers = [`${stickerBase}deco-16.webp`];
     filter: drop-shadow(0 12px 26px rgba(17, 78, 114, 0.3));
   }
   .hero-wrap * { pointer-events: none !important; }
-  /* 像圆柱从布料下面滚过去形成的隆起，不是水面波纹。 */
+  /* 圆柱从布料下面滚过去形成的隆起：横向椭圆鼓包，有前缘高光、顶部受光、底部阴影 */
   .hero-reveal-wave {
     position: absolute;
     left: 0;
     top: 50%;
     z-index: 9;
-    width: clamp(300px, 48vw, 820px);
-    height: 126vh;
+    width: clamp(420px, 62vw, 1040px);
+    height: clamp(220px, 34vh, 420px);
     border-radius: 50%;
     pointer-events: none;
     opacity: 0;
     background:
-      radial-gradient(ellipse at 68% 48%, rgba(255,255,255,.58) 0 5%, rgba(223,245,255,.34) 15%, rgba(123,195,231,.16) 36%, transparent 66%),
-      linear-gradient(90deg, transparent 0 23%, rgba(32,99,142,.26) 38%, rgba(255,255,255,.43) 59%, rgba(114,193,232,.12) 77%, transparent 100%);
-    border: 1px solid rgba(239,251,255,.43);
-    box-shadow: -48px 0 58px rgba(22,83,123,.28), 34px 0 48px rgba(255,255,255,.22), inset -18px 0 30px rgba(255,255,255,.2);
-    filter: blur(2px);
+      radial-gradient(ellipse at 50% 32%, rgba(255,255,255,.66) 0 14%, rgba(226,246,255,.32) 34%, transparent 60%),
+      linear-gradient(180deg, rgba(226,246,255,.4) 0%, rgba(143,207,239,.14) 46%, rgba(46,116,160,.3) 84%, rgba(18,62,96,.42) 100%);
+    border: 1px solid rgba(239,251,255,.5);
+    box-shadow:
+      -46px 0 70px rgba(24,84,124,.34),
+      26px 0 56px rgba(255,255,255,.26),
+      inset 0 -22px 44px rgba(28,86,126,.32),
+      inset 0 18px 38px rgba(255,255,255,.3);
+    filter: blur(1.5px);
     will-change: transform, opacity;
   }
   .hero-bg {
@@ -73,22 +77,37 @@ const stickers = [`${stickerBase}deco-16.webp`];
     background:
       radial-gradient(ellipse at 48% 30%, rgba(239, 250, 255, 0.96) 0%, rgba(169, 220, 244, 0.92) 42%, rgba(95, 165, 207, 0.94) 100%);
   }
+  /* 亚克力下面的模糊彩色光斑：让玻璃 blur 真正有东西可模糊 */
+  .hero-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(620px 420px at 16% 20%, rgba(255, 190, 120, 0.55), transparent 70%),
+      radial-gradient(720px 520px at 80% 66%, rgba(120, 215, 255, 0.5), transparent 70%),
+      radial-gradient(520px 400px at 56% 28%, rgba(255, 225, 170, 0.42), transparent 70%),
+      radial-gradient(480px 420px at 30% 78%, rgba(180, 235, 255, 0.4), transparent 70%);
+    filter: blur(24px);
+  }
   .hero-acrylic {
     position: absolute;
     inset: 0;
     z-index: 10;
     pointer-events: none;
     background:
-      linear-gradient(118deg, rgba(255, 255, 255, 0.27) 0%, rgba(188, 230, 250, 0.1) 30%, rgba(242, 251, 255, 0.2) 67%, rgba(139, 205, 238, 0.11) 100%),
-      rgba(147, 215, 244, 0.22);
-    border: 1px solid rgba(239, 251, 255, 0.72);
+      linear-gradient(118deg, rgba(255, 255, 255, 0.34) 0%, rgba(188, 230, 250, 0.16) 30%, rgba(242, 251, 255, 0.26) 67%, rgba(139, 205, 238, 0.16) 100%),
+      rgba(150, 214, 244, 0.36);
+    border: 2px solid rgba(240, 252, 255, 0.9);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.76),
-      inset 0 -1px 0 rgba(61, 145, 190, 0.18),
-      inset 18px 0 55px rgba(255, 255, 255, 0.1),
-      0 18px 64px rgba(38, 108, 151, 0.18);
-    backdrop-filter: blur(11px) saturate(1.15) brightness(1.08);
-    -webkit-backdrop-filter: blur(11px) saturate(1.15) brightness(1.08);
+      inset 0 2px 0 rgba(255, 255, 255, 0.85),
+      inset 0 -2px 0 rgba(61, 145, 190, 0.22),
+      inset 3px 0 0 rgba(255, 255, 255, 0.4),
+      inset -3px 0 0 rgba(38, 108, 151, 0.16),
+      inset 18px 0 60px rgba(255, 255, 255, 0.14),
+      0 22px 70px rgba(38, 108, 151, 0.28);
+    backdrop-filter: blur(16px) saturate(1.35) brightness(1.14);
+    -webkit-backdrop-filter: blur(16px) saturate(1.35) brightness(1.14);
     opacity: 0;
   }
   .hero-acrylic::before,
@@ -99,15 +118,22 @@ const stickers = [`${stickerBase}deco-16.webp`];
     pointer-events: none;
   }
   .hero-acrylic::before {
-    opacity: 0.54;
+    opacity: 0.75;
     background:
-      repeating-linear-gradient(90deg, rgba(249,254,255,.58) 0 1px, rgba(65,148,191,.08) 1px 2px, transparent 2px 14px),
-      repeating-linear-gradient(0deg, rgba(249,254,255,.54) 0 1px, rgba(65,148,191,.07) 1px 2px, transparent 2px 14px);
+      /* 玻璃板接缝（横向一条：2x2 拼接） */
+      linear-gradient(180deg, transparent 0 49.3%, rgba(36, 100, 143, 0.22) 49.3% 50.7%, transparent 50.7% 100%),
+      /* 玻璃板接缝（纵向一条：2x2 拼接） */
+      linear-gradient(90deg, transparent 0 49.3%, rgba(36, 100, 143, 0.22) 49.3% 50.7%, transparent 50.7% 100%),
+      /* 每块玻璃的斜向高光反射 */
+      repeating-linear-gradient(115deg, rgba(255, 255, 255, 0) 0 90px, rgba(255, 255, 255, 0.07) 90px 170px, rgba(255, 255, 255, 0) 170px 260px),
+      /* 细腻方格纹理 */
+      repeating-linear-gradient(90deg, rgba(249, 254, 255, 0.5) 0 1px, rgba(65, 148, 191, 0.08) 1px 2px, transparent 2px 16px),
+      repeating-linear-gradient(0deg, rgba(249, 254, 255, 0.46) 0 1px, rgba(65, 148, 191, 0.07) 1px 2px, transparent 2px 16px);
   }
   .hero-acrylic::after {
     background:
-      linear-gradient(104deg, transparent 8%, rgba(255,255,255,.34) 10%, rgba(174,224,247,.1) 12%, transparent 17%),
-      linear-gradient(76deg, transparent 69%, rgba(255,255,255,.18) 72%, transparent 77%),
+      linear-gradient(104deg, transparent 6%, rgba(255,255,255,.4) 9%, rgba(174,224,247,.12) 12%, transparent 16%),
+      linear-gradient(76deg, transparent 67%, rgba(255,255,255,.22) 71%, transparent 76%),
       radial-gradient(ellipse at 72% 18%, rgba(255,255,255,.23), transparent 27%),
       radial-gradient(ellipse at 20% 82%, rgba(201,237,255,.15), transparent 30%);
     mix-blend-mode: screen;
@@ -172,6 +198,8 @@ const stickers = [`${stickerBase}deco-16.webp`];
     width: 100%;
     height: auto;
     filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.42));
+    position: relative;
+    z-index: 1;
   }
    /* 14 号装饰：放在标题上面（叠在“大地”大字上）。 */
   .hero-title-deco {
@@ -183,7 +211,8 @@ const stickers = [`${stickerBase}deco-16.webp`];
     height: auto;
     transform: translateX(-50%);
     filter: drop-shadow(0 10px 30px rgba(255, 120, 60, 0.35));
-    z-index: 8;
+    /* 在图 3 后面，不挡字体 */
+    z-index: 0;
   }
   .hero-rotate-tip {
     position: absolute;

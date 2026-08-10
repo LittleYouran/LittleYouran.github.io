@@ -22,7 +22,7 @@ const title = 'Till the Lands Become an Orange';
         to { opacity: 0; transform: translateY(-15%) scale(1.025); filter: blur(2px); }
       }
       @keyframes intro-new-arrive {
-        from { opacity: 0; transform: translateY(12%) scale(1.018); filter: blur(2px); }
+        from { opacity: 0; transform: translateY(-10%) scale(1.012); filter: blur(2px); }
         to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
       }
       * { box-sizing: border-box; }
@@ -30,11 +30,10 @@ const title = 'Till the Lands Become an Orange';
       body { overflow: hidden; font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
       .intro-page { position: relative; width: 100%; height: 100dvh; min-height: 480px; overflow: hidden; isolation: isolate; background: #82c9ec; }
 
-      /* 最终背景从第一帧就在底层，转场只是在它上方掠过，不再先显示空底。 */
-       .final-scene { position: absolute; inset: 0; z-index: 0; opacity: 1; transform: scale(1.018); animation: final-settle .55s .92s cubic-bezier(.2,.72,.2,1) forwards; background: #7fb8d1; }
-      .scene { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; }
-       .scene-main { z-index: 1; opacity: 1; animation: scene-main-drift 18s ease-in-out infinite alternate, scene-brighten .38s .5s ease-out forwards; }
-      .scene-alt { z-index: 2; opacity: 0; animation: scene-alt-cycle 18s 6s ease-in-out infinite; }
+       /* 最终背景从第一帧就在底层，锁定图 6，不轮换，轻微模糊不挡字。 */
+       .final-scene { position: absolute; inset: 0; z-index: 0; opacity: 1; background: #7fb8d1; }
+      .scene { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; filter: blur(3px) brightness(.92); transform: scale(1.04); }
+       .scene-main { z-index: 1; opacity: 1; }
        .scene-shade { position: absolute; inset: 0; z-index: 3; background: linear-gradient(90deg, rgba(10,31,51,.12) 0%, rgba(10,31,51,.025) 48%, transparent 78%), linear-gradient(0deg, rgba(7,24,40,.06), transparent 52%); }
        .copy { position: absolute; z-index: 4; left: clamp(28px, 8vw, 132px); top: 50%; width: min(42rem, 52vw); opacity: 0; transform: translateY(-39%); animation: copy-in .48s .98s cubic-bezier(.18,.82,.22,1) forwards; text-shadow: 0 3px 16px rgba(0,0,0,.52); }
 
@@ -83,11 +82,7 @@ const title = 'Till the Lands Become an Orange';
       @keyframes title-stage-in { to { opacity: 1; transform: translateY(0); } }
       @keyframes title-stage-out { to { opacity: 0; transform: translateY(-5%); } }
       @keyframes title-pop { to { transform: scale(1); } }
-      @keyframes final-settle { to { transform: scale(1); } }
-      @keyframes scene-brighten { to { opacity: 1; } }
       @keyframes copy-in { to { opacity: 1; transform: translateY(-45%); } }
-      @keyframes scene-main-drift { from { transform: scale(1.015) translate3d(0, 0, 0); } to { transform: scale(1.055) translate3d(-1.2%, -.8%, 0); } }
-      @keyframes scene-alt-cycle { 0%, 15% { opacity: 0; transform: scale(1.045); } 27%, 62% { opacity: 1; transform: scale(1); } 75%, 100% { opacity: 0; transform: scale(1.025); } }
 
       @media (max-width: 720px) {
         .copy { left: 24px; top: 38%; width: calc(100% - 48px); }
@@ -102,10 +97,9 @@ const title = 'Till the Lands Become an Orange';
         .copy .desc { margin-top: 12px; font-size: 13px; line-height: 1.6; }
       }
       @media (prefers-reduced-motion: reduce) {
-        .sky-stage, .title-stage, .event-title, .final-scene, .scene, .copy { animation: none; }
+        .sky-stage, .title-stage, .event-title, .final-scene, .copy { animation: none; }
         .sky-stage { transform: none; filter: none; }
         .title-stage { display: none; }
-        .final-scene { opacity: 1; transform: none; }
         .copy { opacity: 1; transform: translateY(-45%); }
       }
     </style>
@@ -120,7 +114,6 @@ const title = 'Till the Lands Become an Orange';
       </section>
       <section class="final-scene">
          <img class="scene scene-main" src="/intro/v9/scene-six.png" alt="天空与角色场景" />
-         <img class="scene scene-alt" src="/intro/v9/scene-a.webp" alt="另一段黄昏旅途场景" />
         <div class="scene-shade" aria-hidden="true"></div>
         <div class="copy">
           <h2>这里是掌柜</h2>

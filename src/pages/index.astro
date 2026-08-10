@@ -29,13 +29,13 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         to { opacity: 0; transform: translateY(18%) scale(.985); filter: blur(2px); }
       }
       @keyframes new-page-lift {
-        from { opacity: 0; transform: translateY(14%) scale(1.015); filter: blur(2px); }
+        from { opacity: 0; transform: translateY(-8%) scale(1.01); filter: blur(2px); }
         to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
       }
       @keyframes page-dive-away {
-        0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); opacity: 1; }
-        48% { transform: translate3d(0, 10%, 0) rotate(1.2deg) scale(.985); opacity: 1; filter: blur(1px); }
-        100% { transform: translate3d(0, 105%, 0) rotate(3deg) scale(.96); opacity: 0; filter: blur(3px); }
+        0% { transform: translate3d(0, 0, 0) scale(1); opacity: 1; filter: blur(0); }
+        55% { transform: translate3d(0, 12%, 0) scale(.99); opacity: 1; filter: blur(1.5px); }
+        100% { transform: translate3d(0, 102%, 0) scale(.97); opacity: 0; filter: blur(3px); }
       }
       @keyframes sky-wash {
         0% { opacity: 0; transform: translateY(100%); }

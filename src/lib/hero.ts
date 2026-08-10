@@ -3,10 +3,10 @@
  *
  * 入场流程（用户定制版）：
  *   BOOT（空屏）→ CHARGE（格里德利从左/中向右冲刺，GIF 播放）
- *   → CRASH（撞右墙，粒子向右释放 + 向左扩散到 3/10 处）
- *   → TSUNAMI（海啸式椭圆波浪从右往左滚动，扫过处铺亚克力背板）
- *   → WAVE2（第二次波浪从右往左，扫过处铺贴纸图片）
- *   → WAVE3（第三次收尾波浪）
+ *   → CRASH（撞右墙，粒子向右释放 + 向左扩散）
+ *   → WAVE1（圆柱滚布式波浪从右往左滚动，亚克力背板与贴纸图片
+ *            同步带出，贴纸随波浪凸起，不是先铺好再滚）
+ *   → WAVE2（收尾波浪，粒子消散）
  *   → TITLE（全部映射完成后标题浮现）→ SETTLE（常驻：背景粒子 + 鼠标跟随）
  *
  * 层结构（页面背景 fixed 铺满全屏，内容在正常流中滚动）：
@@ -161,25 +161,13 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
     const cellH = height / rows;
     for (let i = 0; i < n; i++) {
       const img = stickerEls[i];
-      // 固定网格加小幅抖动，避免角色堆在标题附近。
-      const gx = i % cols;
-      const gy = Math.floor(i / cols);
-      const phase = (i * 2.399963229728653) % 1;
-      const jx = (phase - 0.5) * cellW * 0.18;
-      const jy = (((i * 7) % 11) / 10 - 0.5) * cellH * 0.14;
-      const size = Math.min(width, height) * 0.19;
-      const x = width * 0.77 - size / 2 + jx;
-      const y = height * 0.62 - size / 2 + jy;
-      // 中央标题区留白，角色向四周排，不再挤成一团。
-      const centerX = x + size / 2;
-      const centerY = y + size / 2;
-      const inTitleSafeZone = false;
-      const spreadX = inTitleSafeZone ? (centerX < width / 2 ? -cellW * 0.62 : cellW * 0.62) : 0;
-      const spreadY = inTitleSafeZone ? (centerY < height / 2 ? -cellH * 0.38 : cellH * 0.38) : 0;
-      const rot = ((i * 11) % 17) - 8;
-      const z = i % 3 === 0 ? 12 : 8;
-      // Source image 15 remains the right-side accent after sticker-3 is removed.
-      img.style.cssText = `left:${x + spreadX}px;top:${y + spreadY}px;width:${size}px;height:auto;z-index:${z};transform:rotate(-5deg);opacity:0;`;
+      // 单张贴纸（图 16）：固定在右下角做装饰，不挡标题
+      const size = Math.min(width, height) * 0.2;
+      const x = width * 0.84 - size / 2;
+      const y = height * 0.78 - size / 2;
+      const rot = '-6deg';
+      img.dataset.rot = rot;
+      img.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:auto;z-index:12;transform:rotate(${rot});opacity:0;`;
     }
   }
 
@@ -238,15 +226,41 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
     for (const img of stickerEls) img.style.opacity = String(opacity);
   }
 
+  /** 贴纸随波浪凸起：圆柱滚过布料时，布料上的图案被顶起 */
+  function bumpStickers(edgePct: number) {
+    const edgePx = (edgePct / 100) * width;
+    const bumpW = width * 0.3;
+    for (const img of stickerEls) {
+      const left = parseFloat(img.style.left) || 0;
+      const w = parseFloat(img.style.width) || 0;
+      const centerX = left + w / 2;
+      const dist = Math.abs(centerX - edgePx);
+      const baseRot = img.dataset.rot || '-5deg';
+      if (dist < bumpW) {
+        const lift = Math.sin((dist / bumpW) * Math.PI) * 30;
+        img.style.transform = `translateY(${-lift}px) rotate(${baseRot})`;
+      } else {
+        img.style.transform = `rotate(${baseRot})`;
+      }
+    }
+  }
+
+  function resetStickerTransform() {
+    for (const img of stickerEls) {
+      const baseRot = img.dataset.rot || '-5deg';
+      img.style.transform = `rotate(${baseRot})`;
+    }
+  }
+
   // ---------- 粒子生成 ----------
   function spawnBoom(x: number, y: number) {
     const colors = ['255,120,60', '255,180,80', '255,90,120', '255,220,140', '180,120,255', '120,200,255'];
     boomParticles = [];
-    const count = weak ? 125 : 210;
+    const count = weak ? 170 : 270;
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = 4 + Math.random() * 16;
-      const size = 2 + Math.random() * 6;
+      const size = 3 + Math.random() * 7;
       boomParticles.push(
         createParticle({
           x,
@@ -261,8 +275,8 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
       );
       const p = boomParticles[boomParticles.length - 1];
       // 主体向右释放 + 部分向左扩散
-      const dir = Math.random() < 0.62 ? 1 : -1;
-      p.vx = dir * Math.abs(Math.cos(angle)) * speed * (dir > 0 ? 1 : 0.55);
+      const dir = Math.random() < 0.66 ? 1 : -1;
+      p.vx = dir * Math.abs(Math.cos(angle)) * speed * (dir > 0 ? 1 : 0.6);
       p.vy = Math.sin(angle) * speed - 3;
       p.phase = Math.random() * Math.PI * 2;
     }
@@ -359,19 +373,29 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
           p.alpha *= 0.988;
           if (p.alpha > 0.03) alive++;
         }
-        if (sm.time > 620) sm.setState('TSUNAMI');
+        if (sm.time > 620) sm.setState('WAVE1');
       },
     },
-    TSUNAMI: {
+    WAVE1: {
       enter() {
-        acrylic.style.opacity = '1';
+        // 波浪滚动时同步带出亚克力 + 贴纸，不先铺好再滚
+        acrylic.style.opacity = '0';
+        stickerLayer.style.opacity = '0';
         setWaveClip(acrylic, 104);
+        setWaveClip(stickerLayer, 104);
       },
       update() {
-        const t = Math.min(1, sm.time / 920);
-        const edge = 104 - t * 110;
+        const t = Math.min(1, sm.time / 1050);
+        const edge = 104 - t * 114;
+        // 亚克力与贴纸用同一个边缘同步显现，速度与滚木一致
         setWaveClip(acrylic, edge);
-        positionWave(edge, Math.sin(t * Math.PI) * 0.9);
+        setWaveClip(stickerLayer, edge);
+        acrylic.style.opacity = String(Math.min(1, t * 2.2));
+        stickerLayer.style.opacity = String(Math.min(1, t * 2.2));
+        setStickerOpacity(Math.min(1, t * 2.2));
+        // 圆柱滚布式凸包：波浪边缘扫过时贴纸被顶起
+        bumpStickers(edge);
+        positionWave(edge, Math.sin(t * Math.PI) * 0.95);
         // 爆炸粒子继续飞散
         for (const p of boomParticles) {
           p.x += p.vx;
@@ -380,49 +404,34 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
         }
         if (t >= 1) {
           clearClip(acrylic);
+          clearClip(stickerLayer);
           wave.style.opacity = '0';
+          resetStickerTransform();
           sm.setState('WAVE2');
         }
       },
     },
     WAVE2: {
       enter() {
-        // 第二次波浪：从右往左铺贴纸
+        // 收尾波浪：再扫一次，粒子自然消散
+        acrylic.style.opacity = '1';
         stickerLayer.style.opacity = '1';
+        setStickerOpacity(1);
       },
       update() {
-        const t = Math.min(1, sm.time / 980);
+        const t = Math.min(1, sm.time / 880);
         const edge = 104 - t * 110;
-        setWaveClip(stickerLayer, edge);
-        positionWave(edge, Math.sin(t * Math.PI) * 0.72);
-        setStickerOpacity(Math.min(1, t * 1.5));
-        for (const p of boomParticles) {
-          p.x += p.vx;
-          p.y += p.vy;
-          p.alpha *= 0.97;
-        }
-        if (t >= 1) {
-          clearClip(stickerLayer);
-          wave.style.opacity = '0';
-          setStickerOpacity(1);
-          sm.setState('WAVE3');
-        }
-      },
-    },
-    WAVE3: {
-      enter() {
-        // 收尾波浪：整体再扫一次
-      },
-      update() {
-        const t = Math.min(1, sm.time / 900);
-        // 不裁切 bg 本身，否则会把未铺满的区域变成黑色。
-        // 这一段只让残余粒子自然消散，背板和贴纸已经完整显示。
+        // 收尾波浪只带光效，不裁切背板（避免黑色区域）
+        positionWave(edge, Math.sin(t * Math.PI) * 0.5);
+        bumpStickers(edge);
         for (const p of boomParticles) {
           p.x += p.vx;
           p.y += p.vy;
           p.alpha *= 0.96;
         }
         if (t >= 1) {
+          wave.style.opacity = '0';
+          resetStickerTransform();
           clearClip(bg);
           sm.setState('TITLE');
         }
