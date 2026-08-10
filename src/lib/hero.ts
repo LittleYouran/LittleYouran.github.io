@@ -378,21 +378,21 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
     },
     WAVE1: {
       enter() {
-        // 波浪滚动时同步带出亚克力 + 贴纸，不先铺好再滚
-        acrylic.style.opacity = '0';
+        // 滚木滚过时同步带出亚克力（clip 与滚木速度一致），不先铺好再滚。
+        // 贴纸不随波浪 clip（否则右下角的图 16 会率先显现），改为整体渐显与亚克力融合。
+        acrylic.style.opacity = '1';
         stickerLayer.style.opacity = '0';
         setWaveClip(acrylic, 104);
-        setWaveClip(stickerLayer, 104);
+        clearClip(stickerLayer);
       },
       update() {
         const t = Math.min(1, sm.time / 1050);
         const edge = 104 - t * 114;
-        // 亚克力与贴纸用同一个边缘同步显现，速度与滚木一致
+        // 亚克力用波浪边缘同步显现，速度与滚木一致
         setWaveClip(acrylic, edge);
-        setWaveClip(stickerLayer, edge);
-        acrylic.style.opacity = String(Math.min(1, t * 2.2));
-        stickerLayer.style.opacity = String(Math.min(1, t * 2.2));
-        setStickerOpacity(Math.min(1, t * 2.2));
+        // 贴纸整体渐显，跟亚克力融合，不按位置先后冒出来
+        stickerLayer.style.opacity = String(Math.min(1, t * 1.6));
+        setStickerOpacity(Math.min(1, t * 1.6));
         // 圆柱滚布式凸包：波浪边缘扫过时贴纸被顶起
         bumpStickers(edge);
         positionWave(edge, Math.sin(t * Math.PI) * 0.95);
@@ -404,7 +404,6 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
         }
         if (t >= 1) {
           clearClip(acrylic);
-          clearClip(stickerLayer);
           wave.style.opacity = '0';
           resetStickerTransform();
           sm.setState('WAVE2');
@@ -413,24 +412,25 @@ export function initHero(container: HTMLElement, opts: HeroOptions): HeroControl
     },
     WAVE2: {
       enter() {
-        // 收尾波浪：再扫一次，粒子自然消散
+        // 去掉第二层滚：直接收尾，粒子消散 + 贴纸凸起回弹
         acrylic.style.opacity = '1';
         stickerLayer.style.opacity = '1';
         setStickerOpacity(1);
       },
       update() {
-        const t = Math.min(1, sm.time / 880);
-        const edge = 104 - t * 110;
-        // 收尾波浪只带光效，不裁切背板（避免黑色区域）
-        positionWave(edge, Math.sin(t * Math.PI) * 0.5);
-        bumpStickers(edge);
+        const t = Math.min(1, sm.time / 720);
+        // 不用波浪滚动，只做贴纸轻微起伏回弹 + 粒子消散
+        const lift = Math.sin(t * Math.PI) * 10;
+        for (const img of stickerEls) {
+          const baseRot = img.dataset.rot || '-5deg';
+          img.style.transform = `translateY(${-lift}px) rotate(${baseRot})`;
+        }
         for (const p of boomParticles) {
           p.x += p.vx;
           p.y += p.vy;
-          p.alpha *= 0.96;
+          p.alpha *= 0.95;
         }
         if (t >= 1) {
-          wave.style.opacity = '0';
           resetStickerTransform();
           clearClip(bg);
           sm.setState('TITLE');

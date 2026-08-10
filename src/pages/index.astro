@@ -17,21 +17,6 @@ import HeroCanvas from '../components/HeroCanvas.astro';
         --bg-1: #171226;
         --fg: #eee;
       }
-      @view-transition { navigation: auto; }
-      ::view-transition-old(root) {
-        animation: old-page-descend .72s cubic-bezier(.25,.76,.25,1) both;
-        transform-origin: 50% 0;
-      }
-      ::view-transition-new(root) {
-        animation: new-page-lift .74s cubic-bezier(.2,.78,.22,1) both;
-      }
-      @keyframes old-page-descend {
-        to { opacity: 0; transform: translateY(18%) scale(.985); filter: blur(2px); }
-      }
-      @keyframes new-page-lift {
-        from { opacity: 0; transform: translateY(-8%) scale(1.01); filter: blur(2px); }
-        to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-      }
       @keyframes page-dive-away {
         0% { transform: translate3d(0, 0, 0) scale(1); opacity: 1; filter: blur(0); }
         55% { transform: translate3d(0, 12%, 0) scale(.99); opacity: 1; filter: blur(1.5px); }
@@ -70,15 +55,15 @@ import HeroCanvas from '../components/HeroCanvas.astro';
       .site-header {
         position: fixed;
         top: 0;
-        left: 50%;
-        right: auto;
-        transform: translateX(-50%);
+        left: 0;
+        right: 0;
+        margin: 14px auto 0;
         z-index: 20;
         display: flex;
         align-items: center;
         justify-content: space-between;
         width: min(92vw, 760px);
-        margin-top: 14px;
+        margin: 14px auto 0;
         padding: 11px 18px;
         border-radius: 8px;
         background: rgba(215, 226, 239, 0.13);

@@ -11,20 +11,6 @@ const title = 'Till the Lands Become an Orange';
     <title>{title}</title>
     <style>
       :root { background: #82c9ec; color: #fff; }
-      @view-transition { navigation: auto; }
-      ::view-transition-old(root) {
-        animation: intro-old-up .72s cubic-bezier(.2,.76,.24,1) both;
-      }
-      ::view-transition-new(root) {
-        animation: intro-new-arrive .74s cubic-bezier(.2,.78,.22,1) both;
-      }
-      @keyframes intro-old-up {
-        to { opacity: 0; transform: translateY(-15%) scale(1.025); filter: blur(2px); }
-      }
-      @keyframes intro-new-arrive {
-        from { opacity: 0; transform: translateY(-10%) scale(1.012); filter: blur(2px); }
-        to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-      }
       * { box-sizing: border-box; }
       html, body { margin: 0; width: 100%; min-height: 100%; }
       body { overflow: hidden; font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
@@ -32,10 +18,10 @@ const title = 'Till the Lands Become an Orange';
 
        /* 最终背景从第一帧就在底层，锁定图 6，不轮换，轻微模糊不挡字。 */
        .final-scene { position: absolute; inset: 0; z-index: 0; opacity: 1; background: #7fb8d1; }
-      .scene { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; filter: blur(3px) brightness(.92); transform: scale(1.04); }
+      .scene { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; filter: blur(2px) brightness(1.02); transform: scale(1.03); }
        .scene-main { z-index: 1; opacity: 1; }
-       .scene-shade { position: absolute; inset: 0; z-index: 3; background: linear-gradient(90deg, rgba(10,31,51,.12) 0%, rgba(10,31,51,.025) 48%, transparent 78%), linear-gradient(0deg, rgba(7,24,40,.06), transparent 52%); }
-       .copy { position: absolute; z-index: 4; left: clamp(28px, 8vw, 132px); top: 50%; width: min(42rem, 52vw); opacity: 0; transform: translateY(-39%); animation: copy-in .48s .98s cubic-bezier(.18,.82,.22,1) forwards; text-shadow: 0 3px 16px rgba(0,0,0,.52); }
+       .scene-shade { position: absolute; inset: 0; z-index: 3; background: linear-gradient(90deg, rgba(10,31,51,.06) 0%, rgba(10,31,51,.01) 48%, transparent 78%), linear-gradient(0deg, rgba(7,24,40,.03), transparent 52%); }
+       .copy { position: absolute; z-index: 4; left: clamp(28px, 8vw, 132px); top: 50%; width: min(42rem, 52vw); opacity: 0; transform: translateY(-39%); animation: copy-in .5s .55s cubic-bezier(.18,.82,.22,1) forwards; text-shadow: 0 3px 16px rgba(0,0,0,.52); }
 
       /* 整屏天空，不再在中间硬切深蓝。 */
       .sky-stage {
@@ -46,7 +32,7 @@ const title = 'Till the Lands Become an Orange';
         background: linear-gradient(180deg, #60b6e4 0%, #9fd9f1 48%, #e7f6fb 100%);
         transform: translateY(102%);
         filter: blur(10px);
-        animation: rise-sky .46s cubic-bezier(.18,.82,.22,1) forwards, sky-away .28s .58s ease-in forwards;
+        animation: rise-sky .4s cubic-bezier(.18,.82,.22,1) forwards, sky-away .22s .5s ease-in forwards;
       }
       .cloud { position: absolute; left: -15%; width: 130%; border-radius: 50%; background: rgba(255,255,255,.46); filter: blur(30px); }
       .cloud.one { top: 18%; height: 18%; transform: rotate(-4deg); }
@@ -62,9 +48,9 @@ const title = 'Till the Lands Become an Orange';
         background: #123c72;
         opacity: 0;
         transform: translateY(4%);
-        animation: title-stage-in .22s .45s ease-out forwards, title-stage-out .3s 1.08s ease-in forwards;
+        animation: title-stage-in .2s .4s ease-out forwards, title-stage-out .22s .9s ease-in forwards;
       }
-      .event-title { position: relative; margin: 0 6vw; text-align: center; color: #f5a34c; transform: scale(.94); animation: title-pop .34s .52s cubic-bezier(.2,.8,.2,1) forwards; }
+      .event-title { position: relative; margin: 0 6vw; text-align: center; color: #f5a34c; transform: scale(.94); animation: title-pop .28s .46s cubic-bezier(.2,.8,.2,1) forwards; }
       .event-title h1 { margin: 0; max-width: 1100px; font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: clamp(32px, 6.6vw, 86px); line-height: 1.05; letter-spacing: 0; text-shadow: 0 5px 0 rgba(4,17,45,.28); }
       .event-title::before, .event-title::after { content: "✦"; position: absolute; top: 50%; color: #ffd691; font-size: clamp(20px, 3vw, 42px); transform: translateY(-50%); }
       .event-title::before { left: -5vw; }
@@ -123,5 +109,12 @@ const title = 'Till the Lands Become an Orange';
       </section>
       <a class="back" href="/">返回首页</a>
     </main>
+    <script>
+      // 转场完成后彻底移除深蓝标题层和天空层，防止残留导致"又换回深蓝色背景"
+      window.setTimeout(() => {
+        document.querySelector('.title-stage')?.remove();
+        document.querySelector('.sky-stage')?.remove();
+      }, 1400);
+    </script>
   </body>
 </html>
